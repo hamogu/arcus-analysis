@@ -1,0 +1,33 @@
+children:
+  - 
+    title: Basic layout for ARCUS
+    type: included
+    href: index
+    caption: ARCUS
+    children:
+      -
+        title: ARCUS with a flat inpust spectrum
+        type: x3d
+        href: xbasicflat
+        caption: flat spectrum
+      - 
+        title: ARCUS with a monoenergetic input spectrum
+        type: x3d
+        href: xsingleenergy
+        caption: monochromatic
+  -
+    title: 3 vs 4 sided boom
+    href: boom
+    type: x3d
+    caption: Boom
+    children:
+      -
+        title: Detailed boom simulations
+        type: notebook
+        href: 3vs4sidedboom
+        caption: Details
+      - 
+        title: Boom misalignment
+        type: notebook
+        href: BoomMisalignment
+        caption: Misalignment
