@@ -36,6 +36,7 @@ if not os.path.exists(args.outpath):
 with open('toc.yaml', 'r') as f:
     pagelist = yaml.load(f)
 
+
 # The page list is nested to represent the structure of the menu.
 # Make a flattened copy that can be iterated over:
 def add_children(flatlist, page):
@@ -64,7 +65,14 @@ for page in flatlist:
             if not os.path.exists(outdir):
                 os.makedirs(outdir)
             shutil.copy(pjoin(args.x3dpath, page['href'] + '.x3d'),
-                        pjoin(args.outpath, 'x3d', page['href'] + '.x3d'))
+                        pjoin(outdir, page['href'] + '.x3d'))
+        elif page['type'] == 'notebook':
+            outdir = pjoin(args.outpath, 'notebooks')
+            if not os.path.exists(outdir):
+                os.makedirs(outdir)
+            shutil.copy(pjoin(args.notebookpath, page['href'] + '.html'),
+                        pjoin(outdir, page['href'] + '.html'))
+            kwargs['path'] = pjoin('notebooks', page['href'])
 
     with open(pjoin(args.outpath, page['href'] + '.html'), "w") as f:
         f.write(template.render(pages=pagelist['children'],
