@@ -23,7 +23,7 @@ for i in range(10):
     # Ignore geometric area and set number of photons by hand.
     photons = mysource.generate_photons(n_photons)
     photons = jitterpointing(photons)
-    photons = arcus.arcus4(photons)
+    photons = arcus.arcus_extra_det4(photons)
 
     photons.write(outdir + 'flatspecjitter{:03d}.fits'.format(i), overwrite=True)
 
@@ -32,6 +32,6 @@ for i in range(10):
     # Ignore geometric area and set number of photons by hand.
     photons = mysource.generate_photons(n_photons)
     photons = fixedpointing(photons)
-    photons = arcus.arcus4(photons)
+    photons = arcus.arcusextra_det4(photons)
 
     photons.write(outdir + 'flatspecfixed{:03d}.fits'.format(i), overwrite=True)

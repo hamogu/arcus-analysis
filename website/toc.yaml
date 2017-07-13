@@ -15,6 +15,11 @@ children:
         type: x3d
         href: xsingleenergy
         caption: monochromatic
+      - 
+        title: Effective area and figure of merrit
+        type: notebook
+        href: CATmerrit
+        caption: Fig of merrit
   -
     title: 3 vs 4 sided boom
     href: boom
