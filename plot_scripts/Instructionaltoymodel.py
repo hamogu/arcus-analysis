@@ -47,6 +47,10 @@ demo_det_kwargs = {'d_element': 10.5, 'elem_class': optics.FlatDetector,
 demo_det = rowland.RowlandCircleArray(demo_rowland, theta=[np.pi - 0.8, np.pi + 0.8], **demo_det_kwargs)
 
 detfp = optics.FlatDetector(pixsize=1., zoom=[1, 500, 500])
+detfp.display = deepcopy(detfp.display)
+detfp.display['opacity'] = 0.2
+
+demo_det.elements[0].display['color'] = 'orange'
 
 demo_onaxis_full = simulator.Sequence(elements=[demo_aperture, demo_mirror,
                                                 demo_gas, demo_det, detfp])
@@ -56,7 +60,7 @@ demo_onaxis_sub = simulator.Sequence(elements=[demo_aperture, demo_mirror,
                                                demo_det, detfp])
 
 
-def make_x3dplot(instrument, filename):
+def make_x3dplot(instrument):
     keeppos = simulator.KeepCol('pos')
     instrument.postprocess_steps = [keeppos]
     target = SkyCoord(30., 30., unit='deg')
@@ -71,10 +75,16 @@ def make_x3dplot(instrument, filename):
     fig = mlab.figure()
     plot_object(instrument, viewer=fig)
     plot_rays(posdat, scalar=pp['order'])
-    mlab.savefig(os.path.join(x3dpath, filename))
+    return fig
 
-make_x3dplot(demo_onaxis_full, 'toy_chandralike.x3d')
-make_x3dplot(demo_onaxis_sub, 'toy_subaper.x3d')
+fig = make_x3dplot(demo_onaxis_full)
+demo_rowland.display['coo2'] = np.linspace(-.2, .2, 60)
+obj = plot_object(demo_rowland, viewer=fig)
+mlab.savefig(os.path.join(x3dpath, 'toy_chandralike.x3d'))
+
+fig = make_x3dplot(demo_onaxis_sub)
+obj = plot_object(demo_rowland, viewer=fig)
+mlab.savefig(os.path.join(x3dpath, 'toy_subaper.x3d'))
 
 # ## CAT gratings
 #
@@ -82,8 +92,6 @@ make_x3dplot(demo_onaxis_sub, 'toy_subaper.x3d')
 # - Diffract almost exculsively to one side.
 # - Diffract efficiently into higher orders.
 # - Need CCDs to image those high orders, but also want to see zeroth order for wavelength calibration.
-
-# In[6]:
 
 
 alpha = 0.4
@@ -115,7 +123,9 @@ demo_cat_det = rowland.RowlandCircleArray(demo_cat_rowland, theta=[np.pi - 0.8, 
 demo_cat = simulator.Sequence(elements=[demo_cat_aper, demo_mirror,
                                         demo_cat_gas, demo_cat_det, detfp])
 
-make_x3dplot(demo_cat, 'toy_cat.x3d')
+fig = make_x3dplot(demo_cat)
+obj = plot_object(demo_cat_rowland, viewer=fig)
+mlab.savefig(os.path.join(x3dpath, 'toy_cat.x3d'))
 
 # ## Double tilted Rowland design
 
@@ -153,4 +163,13 @@ demo_catm = simulator.Sequence(elements=[demo_cat_aperm, demo_mirror,
                                          demo_mirrorm,
                                          demo_cat_gasm, demo_cat_det, detfp])
 
-make_x3dplot(demo_cat, 'toy_cat2.x3d')
+fig = make_x3dplot(demo_catm)
+obj = plot_object(demo_cat_rowland, viewer=fig)
+obj = plot_object(rowlandm, viewer=fig)
+mlab.savefig(os.path.join(x3dpath, 'toy_cat2.x3d'))
+
+fig = make_x3dplot(demo_catm)
+demo_rowland.display['coo2'] = np.linspace(-np.pi, np.pi, 60)
+obj = plot_object(demo_cat_rowland, viewer=fig)
+obj = plot_object(rowlandm, viewer=fig)
+mlab.savefig(os.path.join(x3dpath, 'toy_cat2_tori.x3d'))
