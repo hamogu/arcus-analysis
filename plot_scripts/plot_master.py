@@ -12,7 +12,6 @@ from astropy.coordinates import SkyCoord
 from marxs.source import PointSource, JitterPointing
 from marxs import simulator
 from marxs.visualization.mayavi import plot_object, plot_rays
-from marxs.visualization.utils import format_saved_positions
 
 from arcus import arcus
 from arcus import boom
@@ -122,7 +121,7 @@ class XBasicFlat(X3d):
 
     def plot(self):
         ind = (self.photons['probability'] > 0)
-        posdat = format_saved_positions(self.keeppos)[ind, :, :]
+        posdat = self.keeppos.format_positions()[ind, :, :]
         fig = mlab.figure()
         obj = plot_object(self.instrument, viewer=fig)
         rays = plot_rays(posdat, scalar=self.photons[self.plot_col_color][ind])
@@ -207,7 +206,7 @@ class Boom(XBasicFlat):
     def plot(self):
         self.myboom.elements[0].display['color'] = 'blue'
         ind = (self.photons['probability'] > 0)
-        posdat = format_saved_positions(self.keeppos)[ind, :, :]
+        posdat = self.keeppos.format_positions()[ind, :, :]
         fig = mlab.figure()
         obj = plot_object(self.instrument, viewer=fig)
         obj = plot_object(self.myboom, viewer=fig)
