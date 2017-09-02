@@ -161,15 +161,33 @@ demo_cat_gasm = simulator.Sequence(elements=[demo_gas_1, demo_gas_2,
 
 demo_catm = simulator.Sequence(elements=[demo_cat_aperm, demo_mirror,
                                          demo_mirrorm,
-                                         demo_cat_gasm, demo_cat_det, detfp])
+                                         demo_cat_gasm, demo_cat_det])
 
 fig = make_x3dplot(demo_catm)
 obj = plot_object(demo_cat_rowland, viewer=fig)
 obj = plot_object(rowlandm, viewer=fig)
+obj = plot_object(detfp, viewer=fig)
 mlab.savefig(os.path.join(x3dpath, 'toy_cat2.x3d'))
 
 fig = make_x3dplot(demo_catm)
 demo_rowland.display['coo2'] = np.linspace(-np.pi, np.pi, 60)
 obj = plot_object(demo_cat_rowland, viewer=fig)
 obj = plot_object(rowlandm, viewer=fig)
+obj = plot_object(detfp, viewer=fig)
 mlab.savefig(os.path.join(x3dpath, 'toy_cat2_tori.x3d'))
+
+# Plots for SPIE paper
+pngpath = '/Users/hamogu/MITDropbox/my_poster/17_SPIE_ARCUS'
+
+fig = make_x3dplot(demo_catm)
+demo_rowland.display['coo2'] = np.linspace(-.1, .1, 20)
+obj = plot_object(demo_cat_rowland, viewer=fig)
+obj = plot_object(detfp, viewer=fig)
+mlab.view(-35, 155, 3000, [600, 125, 0], roll=-15)
+mlab.savefig(os.path.join(pngpath, 'toy_view1.png'))
+
+fig.scene.parallel_projection = True
+mlab.view(-93, 160, 3000, [580, 125, 0], roll=0.5)
+# don't know how to set the zoom level in parallel projection.
+# Fix that by hand, then save.
+mlab.savefig(os.path.join(pngpath, 'toy_view2.png'))
