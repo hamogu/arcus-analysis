@@ -3,3 +3,5 @@
 # Python / IPython
 *pyc
 *.ipynb_checkpoints*
+# Mac thumbnails
+.DS_Store
