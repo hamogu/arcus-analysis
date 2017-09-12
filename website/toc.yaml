@@ -6,7 +6,7 @@ children:
     caption: ARCUS
     children:
       -
-        title: ARCUS with a flat inpust spectrum
+        title: ARCUS with a flat input spectrum
         type: x3d
         href: xbasicflat
         caption: flat spectrum
@@ -20,6 +20,11 @@ children:
         type: notebook
         href: CATmerrit
         caption: Fig of merrit
+      - 
+        title: The Rowland torus
+        type: notebook
+        href: RowlandGeometry
+        caption: Rowland Geometry
   -
     title: 3 vs 4 sided boom
     href: boom
