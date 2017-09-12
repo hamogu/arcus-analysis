@@ -1,11 +1,7 @@
 import os
 import numpy as np
-from astropy.coordinates import SkyCoord
 import astropy.units as u
-
-from marxs.source import PointSource, JitterPointing
-
-from arcus import Arcus, jitter_sigma
+from arcus import Arcus
 from arcus.defaults import DefaultSource, DefaultPointing
 
 from utils import get_path
