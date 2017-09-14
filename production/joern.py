@@ -1,33 +1,26 @@
-import os
+from os.path import join as pjoin
 import numpy as np
 
-from marxs.source import PointSource, FixedPointing
-from marxs import utils
 from astropy.table import Table
 import astropy.units as u
-from astropy import table
-from astropy.utils.metadata import enable_merge_strategies
 from astropy.io import fits
-import arcus
+from astropy.coordiantes import SkyCoord
+
+from arcus.arcus import ArcusForSIXTE
+from arcus.defaults import DefaultPointing, DefaultSource
+
+from utils import get_path
 
 n_photons = 2e5
 
 wave = np.arange(8., 50., 0.5) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral()).value
 
-outdir = '/melkor/d1/guenther/Dropbox/ARCUS/raysforJoern/'
+outdir = get_path('forsixte')
 
-pointing_offsets = [0, np.deg2rad(0.1)]
+pointing_offsets = [0 * u.degree, 0.1 * u.degree]
 
-
-def swapxz(arr):
-    temp = np.zeros_like(arr)
-    temp[:, 0] = arr[:, 2]
-    temp[:, 1] = arr[:, 1]
-    temp[:, 2] = arr[:, 0]
-    # Need a minus sign here to make the new coordinate system right-handed
-    temp[:, 3] = -arr[:, 3]
-    return temp
+arc = ArcusForSIXTE()
 
 
 def write_joerntables(photons, outdir, ie, indx, offx, indy, offy):
@@ -35,11 +28,9 @@ def write_joerntables(photons, outdir, ie, indx, offx, indy, offy):
         raise ValueError("need monoenergetic simulations")
     orders = set(photons['order'][np.isfinite(photons['order'])])
     for o in orders:
-        filename = os.path.join(outdir, '{0}_{1}_{2}_{3}.fits'.format(ie, indx,indy, int(np.abs(o))))
+        filename = pjoin(outdir, '{0}_{1}_{2}_{3}.fits'.format(ie, indx,indy, int(np.abs(o))))
         ind = (photons['order'] == o)
         tab = Table()
-        tab['pos'] = swapxz(photons['pos'][ind]) * u.mm
-        tab['dir'] = swapxz(photons['dir'][ind]) * u.mm
         tab['time'] = photons['time'][ind] * u.s
         tab['probability'] = photons['probability'][ind]
         tab.write(filename, overwrite=True)
@@ -48,8 +39,10 @@ def write_joerntables(photons, outdir, ie, indx, offx, indy, offy):
         hdulist = fits.open(filename, mode='update')
         hdulist[0].header['ENERGY'] = (photons[0]['energy'], 'energy in keV')
         hdulist[0].header['ORDER'] = (o, 'diffraction order')
-        hdulist[0].header['OFFX'] = (offx, 'offset from optical axis in radian')
-        hdulist[0].header['OFFY'] = (offy, 'offset from optical axis in radian')
+        hdulist[0].header['OFFX'] = (offx.to(u.rad).value,
+                                     'offset from optical axis in radian')
+        hdulist[0].header['OFFY'] = (offy.to(u.rad).value,
+                                     'offset from optical axis in radian')
         hdulist[0].header['NPHOTONS'] = (n_photons, 'Number of photons per simulation')
         hdulist.close()
 
@@ -57,20 +50,11 @@ for ix, offx in enumerate(pointing_offsets):
     for iy, offy in enumerate(pointing_offsets):
         for ie, e in enumerate(energies):
             print ix, iy, ie
-            mysource = PointSource((0., 0.), energy=e, flux=1.)
-            photons = mysource.generate_photons(n_photons / 2)
-
-            mypointing = FixedPointing(coords=(np.rad2deg(offx),
-                                               np.rad2deg(offy)))
+            mysource = DefaultSource((0. * u.rad, 0. * u.rad), energy=e)
+            photons = mysource.generate_photons(n_photons)
+            offsetcoord = SkyCoord((offx, offy))
+            mypointing = DefaultPointing(coords=offsetcoord)
             photons = mypointing(photons)
-            photons = arcus.arcus_joern(photons)
+            photons = arc(photons)
 
-            photonsm = mysource.generate_photons(n_photons / 2)
-            photonsm = mypointing(photonsm)
-            photonsm = arcus.arcus_joernm(photonsm)
-            photonsm['aperture'] += 2
-
-            with enable_merge_strategies(utils.MergeIdentical):
-                out = table.vstack([photons, photonsm])
-
-            write_joerntables(out, outdir, ie, ix, offx, iy, offy)
+            write_joerntables(photons, outdir, ie, ix, offx, iy, offy)

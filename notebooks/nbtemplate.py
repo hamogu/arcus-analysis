@@ -41,6 +41,7 @@ $( document ).ready(code_toggle);
 
 logo = Image('logos/logo.png', height=80, width=80)
 
+
 def get_marxs_status():
     try:
         import marxs.version
@@ -49,6 +50,7 @@ def get_marxs_status():
     return 'MARXS ray-trace code version {} (commit hash: {} from {})'.format(marxs.version.version,
                                                                              marxs.version.githash[:10],
                                                                              marxs.version.timestamp.date())
+
 
 def get_arcus_status():
     try:
@@ -59,6 +61,7 @@ def get_arcus_status():
     return 'ARCUS python code version {} (commit hash: {} from {})'.format(arcus.version.version,
                                                                           arcus.version.githash[:10],
                                                                           arcus.version.timestamp.date())
+
 
 def get_caldb_status():
     try:
@@ -120,9 +123,11 @@ Code was last run with:
            caldb=get_caldb_status())
     return Markdown(out)
 
+
 def display_header(filename, status=None):
     display(logo)
     display(revision_status(filename, status=status))
+
 
 def get_path(name):
     '''Get path name info from site.cfg file in root directory.
@@ -140,5 +145,10 @@ def get_path(name):
         os.makedirs(path)
     return path
 
+
 def display_codetoggle():
+    '''Display button "show code on/off". Calling this function
+    toggles off. Call this at the end of a notebook after all processing steps have run.
+    Otherwise, newly run cell will have prompts.
+    '''
     display(codetoggle)
