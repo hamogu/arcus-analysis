@@ -11,7 +11,7 @@ try:
 except ImportError:
     import ConfigParser as configparser # Py 2
 
-__all__ = ['display_header', 'get_path', 'cfgpath']
+__all__ = ['display_header', 'get_path', 'cfgpath', 'display_codetoggle']
 
 cfgpath = [os.path.join(os.path.dirname(sys.modules[__name__].__file__), '..', 'site.cfg')]
 'Path list to search for configuration files.'
@@ -28,9 +28,11 @@ code_show=true;
 function code_toggle() {
  if (code_show){
  $('div.input').hide();
+ $('div.prompt').hide();
  } else {
  $('div.input').show();
- }
+ $('div.prompt').show();
+}
  code_show = !code_show
 }
 $( document ).ready(code_toggle);
@@ -121,7 +123,6 @@ Code was last run with:
 def display_header(filename, status=None):
     display(logo)
     display(revision_status(filename, status=status))
-    display(codetoggle)
 
 def get_path(name):
     '''Get path name info from site.cfg file in root directory.
@@ -138,3 +139,6 @@ def get_path(name):
     if not os.path.exists(path):
         os.makedirs(path)
     return path
+
+def display_codetoggle():
+    display(codetoggle)
