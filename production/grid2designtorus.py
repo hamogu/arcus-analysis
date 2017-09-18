@@ -4,26 +4,19 @@ import os
 import numpy as np
 import astropy.units as u
 from marxs.design import RowlandTorus
-from arcus import Arcus, jitter_sigma, xyz2zxy
+from arcus import Arcus, xyz2zxy
 import arcus.arcus
-
-# from arcus.defaults import DefaultSource, DefaultPointing
-from marxs.source import PointSource, JitterPointing
-from astropy.coordinates import SkyCoord
+from arcus.defaults import DefaultSource, DefaultPointing
 
 from utils import get_path
+outpath = get_path('grid2designtorus')
 
 n_photons = 10000
 wave = np.arange(8., 50.1, 2.) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral()).value
-outpath = get_path('grid2designtorus')
 
-coords = SkyCoord(40. * u.degree, -15 * u.degree)
-# mypointing = DefaultPointing()
-# mysource = DefaultSource()
-mysource = PointSource(coords=coords)
-mypointing = JitterPointing(jitter=jitter_sigma, coords=coords,
-                            reference_transform=xyz2zxy)
+mypointing = DefaultPointing()
+mysource = DefaultSource()
 
 # Make input photon list with grid of discrete energies
 photons_in = mysource.generate_photons(n_photons * len(wave))
