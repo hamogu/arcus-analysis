@@ -11,7 +11,7 @@ try:
 except ImportError:
     import ConfigParser as configparser # Py 2
 
-__all__ = ['display_header', 'get_path', 'cfgpath']
+__all__ = ['display_header', 'get_path', 'cfgpath', 'display_codetoggle']
 
 cfgpath = [os.path.join(os.path.dirname(sys.modules[__name__].__file__), '..', 'site.cfg')]
 'Path list to search for configuration files.'
@@ -28,9 +28,11 @@ code_show=true;
 function code_toggle() {
  if (code_show){
  $('div.input').hide();
+ $('div.prompt').hide();
  } else {
  $('div.input').show();
- }
+ $('div.prompt').show();
+}
  code_show = !code_show
 }
 $( document ).ready(code_toggle);
@@ -38,6 +40,7 @@ $( document ).ready(code_toggle);
 <form action="javascript:code_toggle()"><input type="submit" value="Click here to toggle on/off the display of raw code."></form>''')
 
 logo = Image('logos/logo.png', height=80, width=80)
+
 
 def get_marxs_status():
     try:
@@ -48,6 +51,7 @@ def get_marxs_status():
                                                                              marxs.version.githash[:10],
                                                                              marxs.version.timestamp.date())
 
+
 def get_arcus_status():
     try:
         with DisableLogger():
@@ -57,6 +61,7 @@ def get_arcus_status():
     return 'ARCUS python code version {} (commit hash: {} from {})'.format(arcus.version.version,
                                                                           arcus.version.githash[:10],
                                                                           arcus.version.timestamp.date())
+
 
 def get_caldb_status():
     try:
@@ -118,10 +123,11 @@ Code was last run with:
            caldb=get_caldb_status())
     return Markdown(out)
 
+
 def display_header(filename, status=None):
     display(logo)
     display(revision_status(filename, status=status))
-    display(codetoggle)
+
 
 def get_path(name):
     '''Get path name info from site.cfg file in root directory.
@@ -138,3 +144,11 @@ def get_path(name):
     if not os.path.exists(path):
         os.makedirs(path)
     return path
+
+
+def display_codetoggle():
+    '''Display button "show code on/off". Calling this function
+    toggles off. Call this at the end of a notebook after all processing steps have run.
+    Otherwise, newly run cell will have prompts.
+    '''
+    display(codetoggle)
