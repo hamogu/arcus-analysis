@@ -8,20 +8,19 @@ import numpy as np
 import astropy.units as u
 
 from mayavi import mlab
-from astropy.coordinates import SkyCoord
-from marxs.source import PointSource, JitterPointing
 from marxs import simulator
 from marxs.visualization.mayavi import plot_object, plot_rays
 
 from arcus import arcus
 from arcus import boom
+from arcus.defaults import DefaultSource, DefaultPointing
 
 
 class ArcusPlot(object):
     n_photons = 1e4
     wave = np.arange(8., 50., 0.5) * u.Angstrom
     energies = wave.to(u.keV, equivalencies=u.spectral()).value
-    instrument = arcus.arcus4
+    instrument = arcus.ArcusforPlot
 
     @property
     def filename(self):
@@ -29,13 +28,11 @@ class ArcusPlot(object):
 
     @property
     def source(self):
-        return PointSource(coords=SkyCoord(30. * u.deg, 30. * u.deg),
-                           energy={'energy': self.energies[::-1],
-                                   'flux': np.ones_like(self.energies) / self.energies ** 2},
-                           flux=1.)
+        return DefaultSource(energy={'energy': self.energies[::-1],
+                                      'flux': np.ones_like(self.energies) / self.energies ** 2}
+        )
 
-    pointing = JitterPointing(coords=SkyCoord(30 * u.deg, 30. * u.deg),
-                              jitter=arcus.jitter_sigma)
+    pointing = DefaultPointing()
 
     def __init__(self, outpath):
         self.outpath = outpath
@@ -167,9 +164,7 @@ class XSingleEnergy(XBasicFlat):
 
     @property
     def source(self):
-        return PointSource(coords=SkyCoord(30. * u.deg, 30. * u.deg),
-                           energy=0.5,
-                           flux=1.)
+        return DefaultSource(energy=0.5, flux=1.)
 
 
 class Boom(XBasicFlat):
