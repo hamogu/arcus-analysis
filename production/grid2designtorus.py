@@ -4,7 +4,7 @@ import os
 import numpy as np
 import astropy.units as u
 from marxs.design import RowlandTorus
-from arcus import Arcus, xyz2zxy
+from arcus import Arcus
 import arcus.arcus
 from arcus.defaults import DefaultSource, DefaultPointing
 
@@ -12,7 +12,7 @@ from utils import get_path
 outpath = get_path('grid2designtorus')
 
 n_photons = 10000
-wave = np.arange(8., 50.1, 2.) * u.Angstrom
+wave = np.arange(8., 50.1, 1.) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral()).value
 
 mypointing = DefaultPointing()
@@ -69,8 +69,8 @@ def make_rowland(d_BF, R, f=11880.):
 
 
 arr_R = np.arange(5800., 6001., 100.)
-arr_d_BF = np.arange(600., 851., 50.)
-arr_blaze = np.arange(1.2, 2.21, 0.2)
+arr_d_BF = np.arange(600., 951., 50.)
+arr_blaze = np.arange(1.2, 2.21, 0.1)
 
 for R in arr_R:
     for d_BF in arr_d_BF:
@@ -93,4 +93,8 @@ for R in arr_R:
                 photons_out.meta['D_CHAN'] = d_BF
                 photons_out.meta['N_PHOT'] = n_photons
                 photons_out.meta['A_GEOM'] = instrum.elements[0].area.to(u.cm**2).value
+                # Keep only those columns absolutely needed for anaylsis
+                # to reduce file size
+                photons_out.keep_columns(['energy', 'probability', 'order',
+                                          'circ_phi', 'circ_y'])
                 photons_out.write(filepath, overwrite=True)
