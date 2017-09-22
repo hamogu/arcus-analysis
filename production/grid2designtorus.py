@@ -93,7 +93,7 @@ for R in arr_R:
                 photons_out.meta['D_CHAN'] = d_BF
                 photons_out.meta['N_PHOT'] = n_photons
                 photons_out.meta['A_GEOM'] = instrum.elements[0].area.to(u.cm**2).value
-                # Keep only those columns absolutely needed for anaylsis
+                # Keep only those columns absolutely needed for analysis
                 # to reduce file size
                 photons_out.keep_columns(['energy', 'probability', 'order',
                                           'circ_phi', 'circ_y'])
