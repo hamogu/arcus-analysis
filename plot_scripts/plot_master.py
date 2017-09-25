@@ -195,7 +195,8 @@ class Boom(XBasicFlat):
 
     def simulation(self):
         super(Boom, self).simulation()
-        self.myboom = boom.ThreeSidedBoom(position=boom.centerpos)
+        self.myboom = boom.ThreeSidedBoom(orientation=arcus.xyz2zxy[:3, :3],
+                                          position=[arcus.defaultconf['d'], 0, 1000])
         self.photons = self.myboom(self.photons)
 
     def plot(self):
