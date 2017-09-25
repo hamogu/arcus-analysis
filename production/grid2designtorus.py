@@ -68,9 +68,9 @@ def make_rowland(d_BF, R, f=11880.):
     return geometry
 
 
-arr_R = np.arange(5800., 6001., 100.)
-arr_d_BF = np.arange(600., 951., 50.)
-arr_blaze = np.arange(1.2, 2.21, 0.1)
+arr_R = np.arange(5800., 6201., 200.)
+arr_d_BF = np.arange(500., 701., 50.)
+arr_blaze = np.arange(1.2, 2.21, 0.2)
 
 for R in arr_R:
     for d_BF in arr_d_BF:

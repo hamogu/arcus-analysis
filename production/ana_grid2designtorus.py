@@ -31,7 +31,7 @@ for f in filelist:
     if outtab is None:
         outtab = out
         wavetab = table.Table([wave], names=['wave'])
-        wavetab['wave'].unit = wave
+        wavetab['wave'].unit = wave.unit
         ordertab = table.Table([orders])
     else:
         outtab = table.vstack([outtab, out], join_type='exact')
