@@ -76,7 +76,7 @@ for ix, offx in enumerate(pointing_offsets):
             photons = photons[np.isfinite(photons['order']) & (photons['weight'] > 0.)]
             photons.write(pjoin(outdir, filename), overwrite=True)
             # Add spectrum hdu
-            spechdu = fits.table_to_hdu(spectab[ie])
+            spechdu = fits.table_to_hdu(spectab[[ie]])  # double [[]] to get table, not row
             with fits.open(pjoin(outdir, filename), 'append') as hdulist:
                 hdulist.append(spechdu)
                 hdulist.flush()
