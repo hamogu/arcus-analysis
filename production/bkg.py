@@ -50,15 +50,16 @@ while simulated_time < requested_time:
     # Fudge the probabilities before drawing to mimick a longer observations
     maxprob = np.max(pdet['probability'])
     pdet['probability'] /= maxprob
+    pdet['time'] /= maxprob
     pdet.meta['EXPOSURE'] = (pdet.meta['EXPOSURE'][0] / maxprob,
                              pdet.meta['EXPOSURE'][1])
     pobs = pdet[pdet['probability'] > np.random.uniform(size=len(pdet))]
     # add offset to time
-    pobs['TIME'] += simulated_time
+    pobs['time'] += simulated_time
     # Save in case of crash
     pobs.write(os.path.join(get_path('rays'), 'bkg_{}.fits'.format(i)),
                overwrite=True)
-    requested_time += pdet.meta['EXPOSURE'][0]
+    simulated_time += pdet.meta['EXPOSURE'][0]
     print('{}: Finished simulation {} reaching {} of {} s'.format(time.ctime(), i, simulated_time, requested_time))
     i += 1
 
