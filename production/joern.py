@@ -1,4 +1,6 @@
+from __future__ import print_function
 from os.path import join as pjoin
+import time
 import numpy as np
 
 from marxs.math.utils import h2e, norm_vector
@@ -12,7 +14,7 @@ from arcus.defaults import DefaultPointing, DefaultSource
 
 from utils import get_path
 
-n_photons = 2e5
+n_photons = 5e5
 
 wave = np.arange(8., 50., 0.5) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral()).value
@@ -23,13 +25,18 @@ pointing_offsets = [0 * u.degree, 0.1 * u.degree]
 
 arc = ArcusForSIXTE()
 
+spectab = Table([energies], names=['ENERGY'])
+spectab['ENERGY'].unit = u.keV
+spectab['N_PHOT'] = n_photons
+spectab.meta['HDUNAME'] = 'SPECTRUM'
+
 
 def write_joerntables(photons, outdir, ie, indx, offx, indy, offy):
     if not np.all(photons['energy'] == photons['energy'][0]):
         raise ValueError("need monoenergetic simulations")
     orders = set(photons['order'][np.isfinite(photons['order'])])
     for o in orders:
-        filename = pjoin(outdir, '{0}_{1}_{2}_{3}.fits'.format(ie, indx,indy, int(np.abs(o))))
+        filename = pjoin(outdir, '{0}_{1}_{2}_{3}.fits'.format(ie, indx, indy, int(np.abs(o))))
         ind = (photons['order'] == o)
         tab = photons[ind]
         tab.write(filename, overwrite=True)
@@ -48,11 +55,11 @@ def write_joerntables(photons, outdir, ie, indx, offx, indy, offy):
 for ix, offx in enumerate(pointing_offsets):
     for iy, offy in enumerate(pointing_offsets):
         for ie, e in enumerate(energies):
-            print ix, iy, ie
+            print('{} {} {} - {}'.format(ix, iy, ie, time.ctime()))
             mysource = DefaultSource(coords=SkyCoord(0. * u.rad, 0. * u.rad), energy=e)
             photons = mysource.generate_photons(n_photons)
             offsetcoord = SkyCoord(offx, offy)
-            mypointing = DefaultPointing(coords=offsetcoord)
+            mypointing = DefaultPointing(coords=offsetcoord, jitter=0.)
             photons = mypointing(photons)
             photons = arc(photons)
             # Reformat and delete columns not required for SIXTE to save space
@@ -63,5 +70,13 @@ for ix, offx in enumerate(pointing_offsets):
             photons.rename_column('aperture', 'channel')
             photons.keep_columns(['POS', 'DIR', 'time', 'weight', 'ra', 'dec',
                                   'channel', 'order', 'energy'])
-
-            write_joerntables(photons, outdir, ie, ix, offx, iy, offy)
+            photons.meta['A_GEOM'] = (arc.elements[0].area.to(u.cm**2).value, 'Geometric opening area in cm')
+            filename = '{0}_{1}_{2}.fits'.format(ie, ix, iy)
+            # Drop photons that are absorbed or miss grating
+            photons = photons[np.isfinite(photons['order']) & (photons['weight'] > 0.)]
+            photons.write(pjoin(outdir, filename), overwrite=True)
+            # Add spectrum hdu
+            spechdu = fits.table_to_hdu(spectab[ie])
+            with fits.open(pjoin(outdir, filename), 'append') as hdulist:
+                hdulist.append(spechdu)
+                hdulist.flush()
