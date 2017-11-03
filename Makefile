@@ -14,11 +14,11 @@ x3d : plot_scripts/plot_master.py $(arcusversionfile)
 
 ../temp/nb_processed/%.processed.ipynb : notebooks/%.ipynb $(arcusversionfile)
 	mkdir -p ../temp/nb_processed
-	jupyter nbconvert --ExecutePreprocessor.timeout=1800 --to notebook --execute $< --output $@
+	jupyter nbconvert --ExecutePreprocessor.timeout=1800 --to notebook --execute $< --output ../$@
 
 ../temp/nb_html/%.html : ../temp/nb_processed/%.processed.ipynb
 	mkdir -p ../temp/nb_html
-	jupyter nbconvert --to html $< --output $@
+	jupyter nbconvert --to html $< --output ../$@
 
 website: nbhtml x3d
 	mkdir -p ../web_out
