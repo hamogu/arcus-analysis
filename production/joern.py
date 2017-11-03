@@ -1,10 +1,11 @@
 from os.path import join as pjoin
 import numpy as np
 
+from marxs.math.utils import h2e, norm_vector
 from astropy.table import Table
 import astropy.units as u
 from astropy.io import fits
-from astropy.coordiantes import SkyCoord
+from astropy.coordinates import SkyCoord
 
 from arcus.arcus import ArcusForSIXTE
 from arcus.defaults import DefaultPointing, DefaultSource
@@ -30,9 +31,7 @@ def write_joerntables(photons, outdir, ie, indx, offx, indy, offy):
     for o in orders:
         filename = pjoin(outdir, '{0}_{1}_{2}_{3}.fits'.format(ie, indx,indy, int(np.abs(o))))
         ind = (photons['order'] == o)
-        tab = Table()
-        tab['time'] = photons['time'][ind] * u.s
-        tab['probability'] = photons['probability'][ind]
+        tab = photons[ind]
         tab.write(filename, overwrite=True)
         # easier to open again to add keywords then use
         # fits interface directly above
@@ -50,11 +49,19 @@ for ix, offx in enumerate(pointing_offsets):
     for iy, offy in enumerate(pointing_offsets):
         for ie, e in enumerate(energies):
             print ix, iy, ie
-            mysource = DefaultSource((0. * u.rad, 0. * u.rad), energy=e)
+            mysource = DefaultSource(coords=SkyCoord(0. * u.rad, 0. * u.rad), energy=e)
             photons = mysource.generate_photons(n_photons)
-            offsetcoord = SkyCoord((offx, offy))
+            offsetcoord = SkyCoord(offx, offy)
             mypointing = DefaultPointing(coords=offsetcoord)
             photons = mypointing(photons)
             photons = arc(photons)
+            # Reformat and delete columns not required for SIXTE to save space
+            photons['POS'] = h2e(photons['pos'])
+            # Make sure direction is normalized
+            photons['DIR'] = norm_vector(h2e(photons['dir']))
+            photons.rename_column('probability', 'weight')
+            photons.rename_column('aperture', 'channel')
+            photons.keep_columns(['POS', 'DIR', 'time', 'weight', 'ra', 'dec',
+                                  'channel', 'order', 'energy'])
 
             write_joerntables(photons, outdir, ie, ix, offx, iy, offy)
