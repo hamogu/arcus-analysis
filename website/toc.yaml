@@ -16,6 +16,11 @@ children:
         href: xsingleenergy
         caption: monochromatic
       - 
+        title: Select Parameters for Rowland Geometry
+        type: notebook
+        href: SelectRowlandParameters
+        caption: Rowland Parameters
+      - 
         title: Effective area and figure of merrit
         type: notebook
         href: CATmerrit
