@@ -1,9 +1,9 @@
+''' '''
 from __future__ import print_function
 import time
 import os
 import numpy as np
 import astropy.units as u
-from arcus import Arcus
 import arcus.arcus
 from arcus.defaults import DefaultSource, DefaultPointing
 from arcus.generate_rowland import make_rowland_from_d_BF_R_f
@@ -26,11 +26,10 @@ for i, e in enumerate(energies):
     photons_in['energy'][i * n_photons: (i + 1) * n_photons] = e
 
 
-class ArcusCirc(Arcus):
+class ArcusCirc(arcus.arcus.PerfectArcus):
     def add_detectors(self, conf):
-        return [arcus.arcus.CircularDetector(conf['rowland_central'], 'circ'),
+        return [arcus.arcus.CircularDetector(conf['rowland_1'], 'circ'),
                 arcus.arcus.FocalPlaneDet()]
-
 
 
 arr_R = np.arange(5900., 6001., 100.)
@@ -39,7 +38,7 @@ arr_blaze = np.arange(1.2, 2.21, 0.2)
 
 for R in arr_R:
     for d_BF in arr_d_BF:
-        conf = make_rowland_from_d_BF_R_f(d_BF, R)
+        conf = make_rowland_from_d_BF_R_f(d_BF, R, 11880.)
         for blaze in arr_blaze:
             conf['blazeang'] = blaze
             filename = '{:04.0f}_{:04.1f}_{:05.0f}.fits'.format(d_BF, blaze, R)
@@ -52,7 +51,7 @@ for R in arr_R:
                 instrum = ArcusCirc(channels=['1'], conf=conf)
                 photons_out = instrum(photons_in.copy())
                 photons_out.meta['TORUS_R'] = R
-                photons_out.meta['CIRCLE_R'] = conf['rowland'].r
+                photons_out.meta['CIRCLE_R'] = conf['rowland_1'].r
                 photons_out.meta['MAX_F'] = conf['f']
                 photons_out.meta['BLAZE'] = blaze
                 photons_out.meta['D_CHAN'] = d_BF

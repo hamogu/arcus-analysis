@@ -30,6 +30,10 @@ children:
         type: notebook
         href: RowlandGeometry
         caption: Rowland Geometry
+  - title: Tolerances
+    type: notebook
+    href: Tolerances
+    caption: Alignment tolerances
   -
     title: 3 vs 4 sided boom
     href: boom

@@ -29,3 +29,8 @@ photons = arc(photons)
 
 photons.write(os.path.join(get_path('rays'), 'EQPegA100ks.fits'),
               overwrite=True)
+pdet = photons[np.isfinite(photons['det_x'])]
+pobs = pdet[pdet['probability'] > np.random.uniform(size=len(pdet))]
+
+pobs.write(os.path.join(get_path('rays'), 'EQPegA100ks_evt.fits'),
+           overwrite=True)

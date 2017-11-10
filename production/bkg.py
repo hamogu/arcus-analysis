@@ -63,8 +63,9 @@ while simulated_time < requested_time:
     print('{}: Finished simulation {} reaching {} of {} s'.format(time.ctime(), i, simulated_time, requested_time))
     i += 1
 
-tablist = [Table.read(os.path.join(get_path('rays'), 'bkg_{}.fits'.format(j))) for j in range(i)]
+tablist = [Table.read(os.path.join(get_path('rays'),
+                                   'bkg_{}.fits'.format(j))) for j in range(i)]
 fulltab = astropy.table.vstack(tablist)
-fulltab.meta['EXPOSURE'] = (simulated_time, fulltab.meta['EXPOSURE'][1])
-fulltabwrite(os.path.join(get_path('rays'), 'longbkg.fits'.format(i)),
-             overwrite=True)
+fulltab.meta['EXPOSURE'] = simulated_time
+fulltab.write(os.path.join(get_path('rays'), 'longbkg.fits'.format(i)),
+              overwrite=True)
