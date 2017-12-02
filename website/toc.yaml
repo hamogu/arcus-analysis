@@ -30,6 +30,11 @@ children:
         type: notebook
         href: RowlandGeometry
         caption: Rowland Geometry
+      - 
+        title: Optimizing the CCD placement
+        type: notebook
+        href: OptimizeDetectorPos
+        caption: CCD placement
   - title: Tolerances
     type: notebook
     href: Tolerances
