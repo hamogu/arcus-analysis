@@ -10,14 +10,14 @@ from arcus.arcus import PerfectArcus
 from utils import get_path
 
 
-n_photons = 20000
+n_photons = 200000
 src = DefaultSource(energy=0.5)
 pnt = DefaultPointing()
 wave = np.array([15., 25., 35.]) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral())
 
-trans_steps = np.array([0., .1, .5, 1., 2., 5., 10., 20., 50.])
-rot_steps = np.deg2rad([0., 0.1, 0.25, 0.5, 1., 2., 5., 10., 30., 60., 120., 180.]) / 60.
+trans_steps = np.array([0., .1, .2, .4, .7, 1., 2., 5., 10.])
+rot_steps = np.deg2rad([0., 2., 5., 10., 15., 20., 25., 30., 40., 50., 60., 120., 180.]) / 60.
 # Ignore the fact that I'm running many iterations with pure zeros.
 # Can be fixed easily in higher numpy version where np.unique( ... axis=) works
 n_trans = len(trans_steps)

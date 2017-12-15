@@ -1,11 +1,14 @@
 from __future__ import print_function
 
+import time
 import os
 import json
 import argparse
 
 import numpy as np
 import astropy.units as u
+
+from astropy.table import Table
 
 from mayavi import mlab
 from marxs import simulator
@@ -17,10 +20,10 @@ from arcus.defaults import DefaultSource, DefaultPointing
 
 
 class ArcusPlot(object):
-    n_photons = 1e4
+    n_photons = 10000
     wave = np.arange(8., 50., 0.5) * u.Angstrom
     energies = wave.to(u.keV, equivalencies=u.spectral()).value
-    instrument = arcus.ArcusforPlot
+    instrument = arcus.ArcusForPlot()
 
     @property
     def filename(self):
@@ -167,6 +170,65 @@ class XSingleEnergy(XBasicFlat):
         return DefaultSource(energy=0.5, flux=1.)
 
 
+class XEQPegA(XBasicFlat):
+    plot_col_color = 'order'
+    n_photons = 2000
+
+    data = {'name': 'emissionlines',
+            'caption': 'Emission Line',
+            'title': '',
+            'figcaption': '''
+            <p>
+            This simulation shows rays from a stellar source. The spectrum
+            consists of a continuum with strong emission lines
+            superimposed. The particular spectrum for this simulation
+            is taken from the active star EQ Peg A, but the spectrum is
+            really representative of any collisionally excited plasma.
+            </p>
+
+            <p>
+            Rays start in the aperture, which consists of four rectangles
+            located above the SPO channels. Each channel has a number of SPO
+            modules, shown in green.
+            The modules have different dimensions depending on their distance
+            from their respective optical axis.
+            Photons bounce of their mirrors twice in a Wolter type I like
+            geometry. However, in this simulation the SPOs are somewhat
+            simplified such that the
+            reflection actually happens in a single plane, shown in white.
+            Rays are imaged onto detectors (yellow).
+            </p>
+
+            <p>
+            The coloring of the rays reflects the grating order that each ray
+            is dispersed into. Because the continuum covers a wide energy range,
+            almost any point on the detector receives photons from several
+            different orders. However, these photons have different energies
+            and can later be sorted apart based on the CCD energy resolution.
+            Every individual emission line is typically seen in 2-3 order
+            at different positions on the detector. For most lines, only one
+            of those orders is strong enough that it really stands out in
+            this simulation, because only a limited number of rays is shown
+            here for simplicity.
+            </p>
+
+            '''}
+
+    @property
+    def source(self):
+        EQPegAspec = Table.read(os.path.join(os.path.dirname(__file__), '../inputdata/EQPegA_flux.tbl'), format='ascii',
+                        names=['energy', 'flux'])
+        # restrict table to ARCUS energy range
+        EQPegAspec = EQPegAspec[(EQPegAspec['energy'] > 0.25) &
+                                (EQPegAspec['energy'] < 1.5)]
+
+        # define position and spectrum of source
+        mysource = DefaultSource(energy=EQPegAspec,
+                                 geomarea=self.instrument.elements[0].area,
+                                 flux=(EQPegAspec['flux'][1:] * np.diff(EQPegAspec['energy'])).sum())
+        return mysource
+
+
 class Boom(XBasicFlat):
     plot_col_color = 'hitrod'
 
@@ -176,14 +238,13 @@ class Boom(XBasicFlat):
             'figcaption': '''
             <p>
             This simulation uses a input spectrum with a flat spectrum
-            (flat in wavelengths space).
+            (flat in wavelength space).
             The elements of the 3-sided boom intersect some of the photons.
             The ray path are colored to distinguish photons that make
             it to the detector (gray) and photons that hit an element of
             the boom at some point (red). On the top and bottom end the
             boom will be attached to some type of socket, which is not
-            shown here because it will hopefully be large enough to not
-            intersect any more light.
+            shown here.
             </p>
 
             <p>
@@ -210,7 +271,7 @@ class Boom(XBasicFlat):
         mlab.savefig(os.path.join(self.outpath, self.filename + '.x3d'))
 
 
-all_plots = ['XBasicFlat', 'XSingleEnergy', 'Boom']
+all_plots = ['XSingleEnergy', 'XEQPegA', 'XSingleEnergy']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='''
@@ -229,3 +290,6 @@ if __name__ == '__main__':
         a.simulation()
         a.plot()
         a.save_html_data()
+    # make sure all files are written before the window closes at the
+    # end of the script
+    time.sleep(1)

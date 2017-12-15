@@ -8,7 +8,7 @@ from arcus.defaults import DefaultSource, DefaultPointing
 
 from utils import get_path
 
-EQPegAspec = Table.read('../../inputdata/EQPegA_flux.tbl', format='ascii',
+EQPegAspec = Table.read('../inputdata/EQPegA_flux.tbl', format='ascii',
                         names=['energy', 'flux'])
 # restrict table to ARCUS energy range
 EQPegAspec = EQPegAspec[(EQPegAspec['energy'] > 0.25) &
@@ -31,6 +31,7 @@ photons.write(os.path.join(get_path('rays'), 'EQPegA100ks.fits'),
               overwrite=True)
 pdet = photons[np.isfinite(photons['det_x'])]
 pobs = pdet[pdet['probability'] > np.random.uniform(size=len(pdet))]
+pobs['probability'] = 1
 
 pobs.write(os.path.join(get_path('rays'), 'EQPegA100ks_evt.fits'),
            overwrite=True)
