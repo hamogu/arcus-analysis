@@ -1,15 +1,28 @@
 {% extends "basic3.html" %}
 
 {% block maincontent %}
+<h2>Arcus optical layout</h2>
 <p>
-Landing page for Moritz's ARCUS ray-traces. Use the navigation bar on the
-left. Please send any comments to hgunther [at] mit [dot] edu
+Arcus is a high resolution X-ray grating spectrometer mission that was proposed
+to NASA as a MIDEX in 2016 and selected for a Phase A concept
+study. See <a href="http://arcusxray.org/index.html">the Arcus website</a> for
+a general introduction of the mission and a <a href="">curated list of articles
+and presentations</a> describing several aspects of the mission in detail.
+</p>
+<p>
+On this page, I (<a href="http://space.mit.edu/home/guenther">Hans Moritz
+G&uuml;nther</a>) collect the material that I have prepared for the Arcus
+mission, including 3D interactive graphics that you can play with yourself to
+get a better intuition how the optical layout in Arcus really works, and memos
+that define Arcus parameters for the optical layout or study the performance
+based on ray-tracing. 
 </p>
 
+<h3>Use of this material</h3>
 <p>
 Please let me know if you need high-resolution versions of any of the plots or
-the data to recreate the plot. Note that the website only displays plots, not
-the actual data (fits file), that would be too big for this space. 
+the data to recreate the plot (hgunther [at] mit [dot] edu). Note that the
+website only displays plots, not the actual data (fits file), that would be too big for this space. 
 </p>
 
 <p>I will update this website with any substantial new run of my simulations
@@ -18,12 +31,13 @@ remember that this is a work in progress. There are several things worth
 cleaning up (e.g. display the version of the software used to make the 3d
 plots).</p>
 
-<p>
-Here is the pointer to the software used:
+
+<h3>Ray-tracing software used in this research</h3>
  <ul>
-  <li>My general ray-trace code <a href="http://marxs.readthedocs.io/en/latest/index.html">MARXS</a></li>
+  <li><a href="http://marxs.readthedocs.io/en/latest/index.html">MARXS</a>:
+  General ray-trace code in Python, described in <a href="http://adsabs.harvard.edu/abs/2017AJ....154..243G">G&uuml;nther et
+  al. (2017)</a> </li>
   <li>Ray-trace code <a href="https://github.com/hamogu/arcus">specific to ARCUS</a></li>
-  <li>Input data on bitbucket (contact Adam for access)</li>
+  <li>Input data on bitbucket (contact me by email if you need access)</li>
 </ul> 
-</p>
 {% endblock %}

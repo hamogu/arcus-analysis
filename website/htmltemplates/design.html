@@ -1,0 +1,29 @@
+{% extends "basic3.html" %}
+
+{% block maincontent %}
+<h2>Basic Arcus design</h2>
+<p>
+Arcus optics consist of Silicon Pore Optics (SPOs) developed for Athena. Arcus
+arranges SPOs in four petals with identical layout. Each petal covers only a
+small angle in azimuth, and thus the Point-Spread function (PSF) is small in
+one direction. However, this strategy limits the geometric area that ahc petal
+can cover and in order to reach a high total effective area, four separate
+petals are used. Each petal has its own, separate, optical axis. 
+</p>
+
+<p>Critical Angle Transmission (CAT) gratings are arranged below each SPO
+petal. CAT gratings follow a Rowland torus geometry. The torus is tilted
+(i.e. the optical axis of a petal does not pass through the center of the
+  Rowland circle). This arrangement reduces the mismatch between the
+  theoretical torus surface and the flat CAT gratings facets of finite size. IT
+  also allows a geometry where we can use the same detector array for all four
+  channels, and still keep all the signal in focus.
+</p>
+
+<p>
+Ray-tracing has been used to optimize the parameters of this layout (e.g. tilt
+angle of the torus, size of the torus, position of the CCDs) and results are
+presented in memos.
+</p>
+
+{% endblock %}

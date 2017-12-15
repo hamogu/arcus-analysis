@@ -1,55 +1,62 @@
 children:
   - 
-    title: Basic layout for ARCUS
+    title: Basic layout for Arcus
     type: included
     href: index
-    caption: ARCUS
+    caption: Arcus Layout and definitons
     children:
-      -
-        title: ARCUS with a flat input spectrum
-        type: x3d
-        href: xbasicflat
-        caption: flat spectrum
       - 
-        title: ARCUS with a monoenergetic input spectrum
+        title: Arcus with a monoenergetic input spectrum
         type: x3d
         href: xsingleenergy
         caption: monochromatic
+      - 
+        title: Arcus with an emission line spectrum
+        type: x3d
+        href: xeqpega
+        caption: Emission Lines
+      - 
+        title: The Rowland torus
+        type: notebook
+        href: RowlandGeometry
+        caption: Rowland Geometry
+  - 
+    title: Choosing the parameters of the Arcus optical design
+    type: included
+    href: design
+    caption: Design choices
+    children:
+      -
+        title: Detailed boom simulations
+        type: notebook
+        href: 3vs4sidedboom
+        caption: 3 vs 4 sided boom
       - 
         title: Select Parameters for Rowland Geometry
         type: notebook
         href: SelectRowlandParameters
         caption: Rowland Parameters
       - 
-        title: Effective area and figure of merrit
-        type: notebook
-        href: CATmerrit
-        caption: Fig of merrit
-      - 
-        title: The Rowland torus
-        type: notebook
-        href: RowlandGeometry
-        caption: Rowland Geometry
-      - 
         title: Optimizing the CCD placement
         type: notebook
         href: OptimizeDetectorPos
         caption: CCD placement
-  - title: Tolerances
-    type: notebook
-    href: Tolerances
-    caption: Alignment tolerances
-  -
-    title: 3 vs 4 sided boom
-    href: boom
-    type: x3d
-    caption: Boom
-    children:
-      -
-        title: Detailed boom simulations
+      - 
+        title: Numerically test the focus position
         type: notebook
-        href: 3vs4sidedboom
-        caption: Details
+        href: TestOfFocus
+        caption: Numeric focus
+  - 
+    title: Arcus performance
+    type: included
+    href: performance
+    caption: Performance
+    children:
+      - 
+        title: Tolerances
+        type: notebook
+        href: Tolerances
+        caption: Alignment tolerances
       - 
         title: Boom misalignment
         type: notebook

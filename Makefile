@@ -10,7 +10,7 @@ arcusversionfile = $(shell python -c "from __future__ import print_function; imp
 
 x3d : plot_scripts/plot_master.py $(arcusversionfile)
 	mkdir -p ../temp/x3d
-	python plot_scripts/plot_master.py outpath=../temp/x3d
+	python plot_scripts/plot_master.py ../temp/x3d
 
 ../temp/nb_processed/%.processed.ipynb : notebooks/%.ipynb $(arcusversionfile)
 	mkdir -p ../temp/nb_processed
@@ -22,4 +22,4 @@ x3d : plot_scripts/plot_master.py $(arcusversionfile)
 
 website: nbhtml x3d
 	mkdir -p ../web_out
-	python website/build_site.py --outpath=../web_out --x3dpath=../temp/x3d --notebookpath=../temp/nb_html
+	python website/build_site.py
