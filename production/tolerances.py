@@ -5,17 +5,21 @@ import astropy.units as u
 from astropy import table
 from arcus import tolerances as tol
 from marxs.simulator import Sequence
+from marxs.optics import CATGrating
 from arcus.defaults import DefaultSource, DefaultPointing
 from arcus.arcus import PerfectArcus
+from arcus.ralfgrating import CATWindow
 from utils import get_path
 
 
 n_photons = 200000
+#n_photons = 20000
 src = DefaultSource(energy=0.5)
 pnt = DefaultPointing()
 wave = np.array([15., 25., 35.]) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral())
 
+jitter_steps = np.array([0.5, 1., 1.5, 2., 5., 10., 20., 30., 60.]) * u.arcsec
 trans_steps = np.array([0., .1, .2, .4, .7, 1., 2., 5., 10.])
 rot_steps = np.deg2rad([0., 2., 5., 10., 15., 20., 25., 30., 40., 50., 60., 120., 180.]) / 60.
 # Ignore the fact that I'm running many iterations with pure zeros.
@@ -33,6 +37,10 @@ half = changeglobal.shape[0] / 2
 changeglobal[half:, :] = - changeglobal[:half, :]
 changeindividual = changeglobal[: half, :]
 
+sigma_period = np.logspace(-6, -2, 13) * 0.0002
+changeperiod = np.zeros((len(sigma_period), 2))
+changeperiod[:, 0] = 0.0002
+changeperiod[:, 1] = sigma_period
 
 instrum = PerfectArcus(channels='1')
 
@@ -40,7 +48,7 @@ instrum = PerfectArcus(channels='1')
 def rename_axes(tab):
     '''Rename axes from x->z, y->x, and z->y in the translation and rotation
 
-    Some elements of Arcus are generated with the xyz2zxy matrix which changes
+    Some elements of Arcus are genera\ted with the xyz2zxy matrix which changes
     The order of the axes. This is the case for example for the SPOs where
     the xyz2zxy matrix is part of the global definition. Inother cases,
     e.g. the CATs, the pos4d matrices are generated from the
@@ -56,7 +64,9 @@ def rename_axes(tab):
 
 def run_for_energies(energies,
                      instrum_before, wigglefunc, wigglepars, instrum_after,
-                     outfile, xyz2zxy=False):
+                     outfile,
+                     parameters=['tx', 'ty', 'tz', 'rx', 'ry', 'rz'],
+                     xyz2zxy=False):
     wave = energies.to(u.Angstrom, equivalencies=u.spectral())
     outtabs = []
     for i, e in enumerate(energies):
@@ -64,7 +74,7 @@ def run_for_energies(energies,
         photons_in = src.generate_photons(n_photons)
         photons_in = pnt(photons_in)
 
-        out = tol.CaptureResAeff(Ageom=instrum_before.elements[0].area.to(u.cm**2))
+        out = tol.CaptureResAeff(len(parameters), Ageom=instrum_before.elements[0].area.to(u.cm**2))
         tol.singletolerance(photons_in,
                             instrum_before,
                             wigglefunc,
@@ -75,12 +85,36 @@ def run_for_energies(energies,
         out.tab['wave'] = wave[i]
         outtabs.append(out.tab)
     dettab = table.vstack(outtabs)
-    for i, c in enumerate(['tx', 'ty', 'tz', 'rx', 'ry', 'rz']):
+    for i, c in enumerate(parameters):
         dettab[c] = dettab['Parameters'].data[:, i]
     if xyz2zxy:
         rename_axes(dettab)
+
     dettab.write(os.path.join(get_path('tolerances'), outfile),
                  overwrite=True)
+
+# jitter
+instrum = PerfectArcus(channels='1')
+wave = energies.to(u.Angstrom, equivalencies=u.spectral())
+outtabs = []
+for i, e in enumerate(energies):
+    src.energy = e.to(u.keV).value
+    photons_in = src.generate_photons(n_photons)
+
+    out = tol.CaptureResAeff(Ageom=instrum.elements[0].area.to(u.cm**2))
+    for j, jit in enumerate(jitter_steps):
+        print('Working on jitter {}/{}'.format(j, len(jitter_steps)))
+        jitterpnt = DefaultPointing(jitter=jit)
+        p_out = jitterpnt(photons_in.copy())
+        p_out = instrum(p_out)
+        out(jit, p_out)
+        out.tab['energy'] = e
+        out.tab['wave'] = wave[i]
+        outtabs.append(out.tab)
+    dettab = table.vstack(outtabs)
+    dettab.write(os.path.join(get_path('tolerances'), 'jitter.fits'),
+                 overwrite=True)
+
 
 # detectors
 instrum = PerfectArcus(channels='1')
@@ -101,9 +135,6 @@ run_for_energies(energies=energies,
 
 # CATs
 instrum = PerfectArcus(channels='1')
-pos4d = np.eye(4)
-pos4d[:, 3] = np.array(instrum.elements[2].elements[0].elem_pos).mean(axis=0)[:, 3]
-instrum.elements[2].elements[0].move_center(pos4d)
 run_for_energies(energies=energies,
                  instrum_before=Sequence(elements=instrum.elements[:2]),
                  wigglefunc=tol.WiggleGlobalParallel(instrum.elements[2]),
@@ -114,10 +145,29 @@ run_for_energies(energies=energies,
 instrum = PerfectArcus(channels='1')
 run_for_energies(energies=energies,
                  instrum_before=Sequence(elements=instrum.elements[:2]),
+                 wigglefunc=tol.WiggleIndividualElements(instrum.elements[2],
+                                                         CATWindow),
+                 wigglepars=changeindividual,
+                 instrum_after=Sequence(elements=instrum.elements[3:]),
+                 outfile='CAT_windows.fits')
+
+instrum = PerfectArcus(channels='1')
+run_for_energies(energies=energies,
+                 instrum_before=Sequence(elements=instrum.elements[:2]),
                  wigglefunc=tol.WiggleIndividualElements(instrum.elements[2]),
                  wigglepars=changeindividual,
                  instrum_after=Sequence(elements=instrum.elements[3:]),
                  outfile='CAT_individual.fits')
+
+instrum = PerfectArcus(channels='1')
+run_for_energies(energies=energies,
+                 instrum_before=Sequence(elements=instrum.elements[:2]),
+                 wigglefunc=tol.PeriodVariation(instrum.elements[2], CATGrating),
+                 wigglepars=changeperiod,
+                 instrum_after=Sequence(elements=instrum.elements[3:]),
+                 outfile='CAT_period.fits',
+                 parameters=['nominal', 'sigma'])
+
 
 # SPOs
 # increase size of aperture to make sure light reaches SPOs.
