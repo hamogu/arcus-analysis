@@ -16,7 +16,7 @@ n_photons = 200000
 #n_photons = 20000
 src = DefaultSource(energy=0.5)
 pnt = DefaultPointing()
-wave = np.array([15., 25., 35.]) * u.Angstrom
+wave = np.array([15., 25., 37.]) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral())
 
 jitter_steps = np.array([0.5, 1., 1.5, 2., 5., 10., 20., 30., 60.]) * u.arcsec
@@ -48,9 +48,9 @@ instrum = PerfectArcus(channels='1')
 def rename_axes(tab):
     '''Rename axes from x->z, y->x, and z->y in the translation and rotation
 
-    Some elements of Arcus are genera\ted with the xyz2zxy matrix which changes
-    The order of the axes. This is the case for example for the SPOs where
-    the xyz2zxy matrix is part of the global definition. Inother cases,
+    Some elements of Arcus are generated with the xyz2zxy matrix which changes
+    the order of the axes. This is the case for example for the SPOs where
+    the xyz2zxy matrix is part of the global definition. In other cases,
     e.g. the CATs, the pos4d matrices are generated from the
     Rowland torus, this is instead applied to individual elements.
     Due to the order in which the misalignment matrices are applied, the SPOs
@@ -101,13 +101,14 @@ for i, e in enumerate(energies):
     src.energy = e.to(u.keV).value
     photons_in = src.generate_photons(n_photons)
 
-    out = tol.CaptureResAeff(Ageom=instrum.elements[0].area.to(u.cm**2))
+    out = tol.CaptureResAeff(2, Ageom=instrum.elements[0].area.to(u.cm**2))
     for j, jit in enumerate(jitter_steps):
         print('Working on jitter {}/{}'.format(j, len(jitter_steps)))
         jitterpnt = DefaultPointing(jitter=jit)
         p_out = jitterpnt(photons_in.copy())
         p_out = instrum(p_out)
-        out(jit, p_out)
+        ind = np.isfinite(p_out['det_x']) & (p_out['probability'] > 0)
+        out(jit, p_out[ind], n_photons)
         out.tab['energy'] = e
         out.tab['wave'] = wave[i]
         outtabs.append(out.tab)
