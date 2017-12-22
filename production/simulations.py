@@ -2,7 +2,7 @@ import os
 import time
 import numpy as np
 import astropy.units as u
-from arcus import Arcus
+from arcus.arcus import Arcus, PerfectArcus
 from arcus.defaults import DefaultSource, DefaultPointing
 
 from utils import get_path
@@ -14,16 +14,18 @@ outpath = get_path('raygrid')
 
 mypointing = DefaultPointing()
 
-instrum = Arcus()
+for instrum, path in zip([Arcus(), PerfectArcus()],
+                        ['raygrid', 'raygrid-perfect']):
+    outpath = get_path(path)
 
-for i, e in enumerate(energies):
-    print '{0}/{1} = {2}'.format(i + 1, len(energies), time.ctime())
-    mysource = DefaultSource(energy=e)
+    for i, e in enumerate(energies):
+        print '{0}/{1} = {2}'.format(i + 1, len(energies), time.ctime())
+        mysource = DefaultSource(energy=e)
 
-    photons = mysource.generate_photons(n_photons)
-    photons = mypointing(photons)
-    photons = instrum(photons)
+        photons = mysource.generate_photons(n_photons)
+        photons = mypointing(photons)
+        photons = instrum(photons)
 
-    photons.write(os.path.join(outpath,
-                               'wave{0:05.2f}.fits'.format(wave.value[i])),
-                  overwrite=True)
+        photons.write(os.path.join(outpath,
+                                   'wave{0:05.2f}.fits'.format(wave.value[i])),
+                      overwrite=True)

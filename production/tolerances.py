@@ -9,6 +9,7 @@ from marxs.optics import CATGrating
 from arcus.defaults import DefaultSource, DefaultPointing
 from arcus.arcus import PerfectArcus
 from arcus.ralfgrating import CATWindow
+from arcus.spo import ScatterPerChannel
 from utils import get_path
 
 
@@ -42,7 +43,10 @@ changeperiod = np.zeros((len(sigma_period), 2))
 changeperiod[:, 0] = 0.0002
 changeperiod[:, 1] = sigma_period
 
-instrum = PerfectArcus(channels='1')
+scatter = np.array([0, .5, 1., 2., 4., 6., 8.])
+scatter = np.hstack([np.vstack([scatter, np.zeros_like(scatter)]),
+                     np.vstack([np.zeros_like(scatter[1:]), scatter[1:]])])
+scatter = np.deg2rad(scatter / 3600.).T
 
 
 def rename_axes(tab):
@@ -90,8 +94,9 @@ def run_for_energies(energies,
     if xyz2zxy:
         rename_axes(dettab)
 
-    dettab.write(os.path.join(get_path('tolerances'), outfile),
-                 overwrite=True)
+    outfull = os.path.join(get_path('tolerances'), outfile)
+    dettab.write(outfull, overwrite=True)
+    print('Writing {}'.format(outfull))
 
 # jitter
 instrum = PerfectArcus(channels='1')
@@ -101,7 +106,7 @@ for i, e in enumerate(energies):
     src.energy = e.to(u.keV).value
     photons_in = src.generate_photons(n_photons)
 
-    out = tol.CaptureResAeff(2, Ageom=instrum.elements[0].area.to(u.cm**2))
+    out = tol.CaptureResAeff(1, Ageom=instrum.elements[0].area.to(u.cm**2))
     for j, jit in enumerate(jitter_steps):
         print('Working on jitter {}/{}'.format(j, len(jitter_steps)))
         jitterpnt = DefaultPointing(jitter=jit)
@@ -111,10 +116,20 @@ for i, e in enumerate(energies):
         out(jit, p_out[ind], n_photons)
         out.tab['energy'] = e
         out.tab['wave'] = wave[i]
-        outtabs.append(out.tab)
-    dettab = table.vstack(outtabs)
-    dettab.write(os.path.join(get_path('tolerances'), 'jitter.fits'),
-                 overwrite=True)
+    outtabs.append(out.tab)
+dettab = table.vstack(outtabs)
+dettab.write(os.path.join(get_path('tolerances'), 'jitter.fits'),
+             overwrite=True)
+
+# SPO scatter
+instrum = PerfectArcus(channels='1')
+run_for_energies(energies=energies,
+                 instrum_before=instrum.elements[0],
+                 wigglefunc=tol.ScatterVariation(instrum.elements[1],
+                                             ScatterPerChannel),
+                 wigglepars=scatter,
+                 instrum_after=Sequence(elements=instrum.elements[2:]),
+                 outfile='scatter.fits')
 
 
 # detectors
@@ -144,21 +159,22 @@ run_for_energies(energies=energies,
                  outfile='CAT_global.fits')
 
 instrum = PerfectArcus(channels='1')
+# individual CATs are the elements of the CATWindows
 run_for_energies(energies=energies,
                  instrum_before=Sequence(elements=instrum.elements[:2]),
                  wigglefunc=tol.WiggleIndividualElements(instrum.elements[2],
                                                          CATWindow),
                  wigglepars=changeindividual,
                  instrum_after=Sequence(elements=instrum.elements[3:]),
-                 outfile='CAT_windows.fits')
-
+                 outfile='CAT_individual.fits')
+# Windows are the elements of CATfromMechanical (which is instrum.elements[2])
 instrum = PerfectArcus(channels='1')
 run_for_energies(energies=energies,
                  instrum_before=Sequence(elements=instrum.elements[:2]),
                  wigglefunc=tol.WiggleIndividualElements(instrum.elements[2]),
                  wigglepars=changeindividual,
                  instrum_after=Sequence(elements=instrum.elements[3:]),
-                 outfile='CAT_individual.fits')
+                 outfile='CAT_window.fits')
 
 instrum = PerfectArcus(channels='1')
 run_for_energies(energies=energies,
@@ -182,8 +198,7 @@ run_for_energies(energies=energies,
                  wigglefunc=tol.WiggleGlobalParallel(instrum.elements[1]),
                  wigglepars=changeglobal,
                  instrum_after=Sequence(elements=instrum.elements[2:]),
-                 outfile='SPOs_global.fits',
-                 xyz2zxy=True)
+                 outfile='SPOs_global.fits')
 
 instrum = PerfectArcus(channels='1')
 instrum.elements[0].elements[0].pos4d[0, 1] += np.max(trans_steps)
@@ -193,5 +208,4 @@ run_for_energies(energies=energies,
                  wigglefunc=tol.WiggleIndividualElements(instrum.elements[1]),
                  wigglepars=changeindividual,
                  instrum_after=Sequence(elements=instrum.elements[2:]),
-                 outfile='SPOs_individual.fits',
-                 xyz2zxy=True)
+                 outfile='SPOs_individual.fits')
