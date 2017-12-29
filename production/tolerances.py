@@ -129,7 +129,8 @@ run_for_energies(energies=energies,
                                              ScatterPerChannel),
                  wigglepars=scatter,
                  instrum_after=Sequence(elements=instrum.elements[2:]),
-                 outfile='scatter.fits')
+                 outfile='scatter.fits',
+                 parameters=['inplanescatter', 'perpplanescatter'])
 
 
 # detectors
