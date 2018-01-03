@@ -2,19 +2,41 @@ from os.path import join as pjoin
 import time
 import numpy as np
 import astropy.units as u
-from arcus.arcus import Arcus, PerfectArcus, defaultconf
+from marxs.analysis import ProjectOntoPlane
+from arcus.arcus import (Arcus, PerfectArcus, defaultconf,
+                         DetCamera,
+                         CircularDetector)
 from arcus.defaults import DefaultSource, DefaultPointing
 from arcus.analysis.grid import aeffRfromraygrid, csv_per_order
+from arcus import xyz2zxy
 from utils import get_path
 
-n_photons = 4e5
+n_photons = 400000
 wave = np.arange(8., 50., 0.15) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral()).value
 outpath = get_path('raygrid')
 
 mypointing = DefaultPointing()
 
-for instrum, path in zip([Arcus(), PerfectArcus()],
+
+# Add a circular detector to standard Arcus definitions
+class ArcusDet(Arcus):
+    def add_detectors(self, conf):
+        twostrips = DetCamera(conf)
+        proj = ProjectOntoPlane(orientation=xyz2zxy[:3, :3])
+        detcirc = CircularDetector(conf['rowland_detector'], 'circ')
+        return [twostrips, proj, detcirc]
+
+
+class PerfectArcusDet(PerfectArcus):
+    def add_detectors(self, conf):
+        twostrips = DetCamera(conf)
+        proj = ProjectOntoPlane(orientation=xyz2zxy[:3, :3])
+        detcirc = CircularDetector(conf['rowland_detector'], 'circ')
+        return [twostrips, proj, detcirc]
+
+
+for instrum, path in zip([ArcusDet(), PerfectArcusDet()],
                          ['raygrid', 'raygrid-perfect']):
     outpath = get_path(path)
 
