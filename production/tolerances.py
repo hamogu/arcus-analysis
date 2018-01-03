@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+from copy import deepcopy
 import numpy as np
 import astropy.units as u
 from astropy import table
@@ -10,6 +11,7 @@ from arcus.defaults import DefaultSource, DefaultPointing
 from arcus.arcus import PerfectArcus
 from arcus.ralfgrating import CATWindow
 from arcus.spo import ScatterPerChannel
+import arcus
 from utils import get_path
 
 
@@ -210,3 +212,36 @@ run_for_energies(energies=energies,
                  wigglepars=changeindividual,
                  instrum_after=Sequence(elements=instrum.elements[2:]),
                  outfile='SPOs_individual.fits')
+
+
+# Run default tolerance budget a few times
+n_budget = 50
+out = tol.CaptureResAeff(2, Ageom=instrum.elements[0].area.to(u.cm**2))
+
+conf = deepcopy(arcus.arcus.defaultconf)
+
+for i in range(n_budget):
+    print('Run default tolerance budget: {}/{}'.format(i, n_budget))
+    align = deepcopy(arcus.arcus.align_requirement_smith)
+    arcus.arcus.reformat_randall_errorbudget(align, globalfac=None)
+    conf['alignmentbudget'] = align
+    if i == 0:
+        arc = PerfectArcus(channels='1')
+    else:
+        arc = arcus.arcus.Arcus(channels='1', conf=conf)
+
+    for e in energies:
+        src.energy = e.to(u.keV).value
+        photons_in = src.generate_photons(n_photons)
+        photons_in = pnt(photons_in)
+        photons = arc(photons_in)
+        good = (photons['probability'] > 0) & (photons['CCD'] > 0)
+        out([i, src.energy], photons[good], n_photons)
+
+out.tab['energy'] = out.tab['Parameters'].data[:, 1] * u.keV
+out.tab['wave'] = out.tab['energy'].to(u.Angstrom, equivalencies=u.spectral())
+out.tab['run'] = out.tab['Parameters'].data[:, 0]
+
+outfull = os.path.join(get_path('tolerances'), 'baseline_budget.fits')
+out.tab.write(outfull, overwrite=True)
+print('Writing {}'.format(outfull))
