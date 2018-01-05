@@ -16,7 +16,7 @@ from utils import get_path
 
 n_photons = 5e5
 
-wave = np.arange(8., 50., 0.5) * u.Angstrom
+wave = np.arange(1.5, 50., 0.5) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral()).value
 
 outdir = get_path('forsixte')
@@ -69,7 +69,7 @@ for ix, offx in enumerate(pointing_offsets):
             photons.rename_column('probability', 'weight')
             photons.rename_column('aperture', 'channel')
             photons.keep_columns(['POS', 'DIR', 'time', 'weight', 'ra', 'dec',
-                                  'channel', 'order', 'energy'])
+                                  'channel', 'order', 'energy', 'xuo', 'facet'])
             photons.meta['A_GEOM'] = (arc.elements[0].area.to(u.cm**2).value, 'Geometric opening area in cm')
             filename = '{0}_{1}_{2}.fits'.format(ie, ix, iy)
             # Drop photons that are absorbed or miss grating
