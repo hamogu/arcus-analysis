@@ -6,10 +6,9 @@ import astropy.units as u
 from astropy import table
 from arcus import tolerances as tol
 from marxs.simulator import Sequence
-from marxs.optics import CATGrating
 from arcus.defaults import DefaultSource, DefaultPointing
 from arcus.arcus import PerfectArcus
-from arcus.ralfgrating import CATWindow
+from arcus.ralfgrating import CATWindow, CATGratingwithL1
 from arcus.spo import ScatterPerChannel
 import arcus
 from utils import get_path
@@ -44,6 +43,8 @@ sigma_period = np.logspace(-6, -2, 13) * 0.0002
 changeperiod = np.zeros((len(sigma_period), 2))
 changeperiod[:, 0] = 0.0002
 changeperiod[:, 1] = sigma_period
+
+catflatness = np.deg2rad([[0., 0.05, .1, .15, .2, .5, 1.]]).T
 
 scatter = np.array([0, .5, 1., 2., 4., 6., 8.])
 scatter = np.hstack([np.vstack([scatter, np.zeros_like(scatter)]),
@@ -91,8 +92,11 @@ def run_for_energies(energies,
         out.tab['wave'] = wave[i]
         outtabs.append(out.tab)
     dettab = table.vstack(outtabs)
-    for i, c in enumerate(parameters):
-        dettab[c] = dettab['Parameters'].data[:, i]
+    if len(parameters) == 1:
+        dettab[parameters[0]] = dettab['Parameters'].data
+    else:
+        for i, c in enumerate(parameters):
+            dettab[c] = dettab['Parameters'].data[:, i]
     if xyz2zxy:
         rename_axes(dettab)
 
@@ -179,14 +183,25 @@ run_for_energies(energies=energies,
                  instrum_after=Sequence(elements=instrum.elements[3:]),
                  outfile='CAT_window.fits')
 
+# Period Variation
 instrum = PerfectArcus(channels='1')
 run_for_energies(energies=energies,
                  instrum_before=Sequence(elements=instrum.elements[:2]),
-                 wigglefunc=tol.PeriodVariation(instrum.elements[2], CATGrating),
+                 wigglefunc=tol.PeriodVariation(instrum.elements[2], CATGratingwithL1),
                  wigglepars=changeperiod,
                  instrum_after=Sequence(elements=instrum.elements[3:]),
                  outfile='CAT_period.fits',
                  parameters=['nominal', 'sigma'])
+
+# CAT surfaceflatness
+instrum = PerfectArcus(channels='1')
+run_for_energies(energies=energies,
+                 instrum_before=Sequence(elements=instrum.elements[:2]),
+                 wigglefunc=tol.CATFlatnessVariation(instrum.elements[2], CATGratingwithL1),
+                 wigglepars=catflatness,
+                 instrum_after=Sequence(elements=instrum.elements[3:]),
+                 outfile='CAT_flatness.fits',
+                 parameters=['sigma'])
 
 
 # SPOs
