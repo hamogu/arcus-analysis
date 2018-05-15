@@ -44,7 +44,8 @@ changeperiod = np.zeros((len(sigma_period), 2))
 changeperiod[:, 0] = 0.0002
 changeperiod[:, 1] = sigma_period
 
-catflatness = np.deg2rad([[0., 0.05, .1, .15, .2, .5, 1.]]).T
+catflatness = np.deg2rad([[0., .1, .2, .4, .6, .8, 1.]]).T
+catbuckeling = np.deg2rad([[0., .25, .5, .75, 1., 1.5, 2., 3., 5]]).T
 
 scatter = np.array([0, .5, 1., 2., 4., 6., 8.])
 scatter = np.hstack([np.vstack([scatter, np.zeros_like(scatter)]),
@@ -202,6 +203,17 @@ run_for_energies(energies=energies,
                  instrum_after=Sequence(elements=instrum.elements[3:]),
                  outfile='CAT_flatness.fits',
                  parameters=['sigma'])
+# CAT buckeling
+instrum = PerfectArcus(channels='1')
+run_for_energies(energies=energies,
+                 instrum_before=Sequence(elements=instrum.elements[:2]),
+                 wigglefunc=tol.CATFlatnessVariation(instrum.elements[2],
+                                                     parallel_class=CATGratingwithL1,
+                                                     orderselector=tol.OrderSelectorTopHat),
+                 wigglepars=catbuckeling,
+                 instrum_after=Sequence(elements=instrum.elements[3:]),
+                 outfile='CAT_buckeling.fits',
+                 parameters=['fullwidth'])
 
 
 # SPOs
@@ -260,3 +272,52 @@ out.tab['run'] = out.tab['Parameters'].data[:, 0]
 outfull = os.path.join(get_path('tolerances'), 'baseline_budget.fits')
 out.tab.write(outfull, overwrite=True)
 print('Writing {}'.format(outfull))
+
+
+# This one should be part of step 1, but needs to be run at the end of the
+# script because it monkey-patches the definition of Arcus and we
+# do not want to mess up any of the other runs.
+instrum = PerfectArcus(channels='1')  # Just to get Aeff below
+import arcus.ralfgrating as rg
+rg.CATWindow.elem_class = rg.NonParallelCATGrating
+catblazegradients = np.deg2rad(np.array([-2, -1.5, -1, -.5, -.17, 0., .17, .5, 1., 1.5, 2.]) / 30)
+
+outtabs = []
+for i, e in enumerate(energies):
+    src.energy = e.to(u.keV).value
+    photons_in = src.generate_photons(n_photons)
+    photons_in = pnt(photons_in)
+    out = tol.CaptureResAeff(1, Ageom=instrum.elements[0].area.to(u.cm**2))
+    for j, grad in enumerate(catblazegradients):
+        print('Working on CAT gradient {}/{}'.format(j, len(catblazegradients)))
+        rg.CATWindow.extra_elem_args['d_blaze_mm'] = grad
+        instrum = PerfectArcus(channels='1')
+        p_out = instrum(photons_in.copy())
+        ind = np.isfinite(p_out['det_x']) & (p_out['probability'] > 0)
+        out(grad, p_out[ind], n_photons)
+        out.tab['energy'] = e
+        out.tab['wave'] = wave[i]
+    outtabs.append(out.tab)
+dettab = table.vstack(outtabs)
+dettab.write(os.path.join(get_path('tolerances'), 'blazegradient.fits'),
+             overwrite=True)
+
+
+# More detailed analysis of Ralf's worst case gratings
+rg.CATWindow.elem_class = rg.GeneralLinearNonParallelCAT
+# add a rotation to correct for the blaze problem
+blazecorrect = np.zeros((13, 6))
+blazecorrect[:, 4] = np.deg2rad(np.arange(-1.2, 1.3, .2))
+
+for i, blazeargs in enumerate([(0.036, -0.8), (0.036, 0.8),
+                               (-0.036, -0.8), (-0.036, 0.8)]):
+    rg.CATWindow.extra_elem_args['d_blaze_mm'] = np.deg2rad(blazeargs[0])
+    rg.CATWindow.extra_elem_args['blaze_center'] = np.deg2rad(blazeargs[1])
+    instrum = PerfectArcus(channels='1')
+    run_for_energies(energies=energies,
+                     instrum_before=Sequence(elements=instrum.elements[:2]),
+                     wigglefunc=tol.MoveIndividualParallel(instrum.elements[2],
+                                                           CATWindow),
+                     wigglepars=blazecorrect,
+                     instrum_after=Sequence(elements=instrum.elements[3:]),
+                     outfile='CAT_blaze_detail{}.fits'.format(i))
