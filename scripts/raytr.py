@@ -1,9 +1,6 @@
 import numpy as np
 
-from marxs.source import PointSource, FixedPointing
 import marxs
-import astropy.units as u
-from astropy.coordinates import SkyCoord
 import arcus
 import arcus.arcus
 
@@ -11,25 +8,24 @@ from mayavi import mlab
 from marxs.math.utils import h2e
 from marxs import visualization
 from marxs.visualization.mayavi import plot_object, plot_rays
+%matplotlib
+
+from arcus.arcus import Arcus
+from arcus.defaults import DefaultSource, DefaultPointing
 
 
 n_photons = 1e4
-wave = np.arange(8., 50., 0.5) * u.Angstrom
-#energies = np.arange(.2, 1.9, .01)
-energies = wave.to(u.keV, equivalencies=u.spectral()).value
-outfile = '../results/aeff.fits'
-
 e = 0.5
 
-mysource = PointSource(coords=SkyCoord(30. * u.deg, 30. * u.deg),
-                       energy=e, flux=1.)
-photons = mysource.generate_photons(n_photons)
+mypointing = DefaultPointing()
 
-mypointing = FixedPointing(coords=SkyCoord(30 * u.deg, 30. * u.deg))
+mysource = DefaultSource(energy=e)
+
+photons = mysource.generate_photons(n_photons)
 photons = mypointing(photons)
 
-photons = arcus.arcus.arcus4(photons)
-
+instrum = Arcus()
+photons = instrum(photons)
 
 
 ind = (photons['probability'] > 0)

@@ -12,9 +12,9 @@ from arcus import xyz2zxy
 from utils import get_path
 
 n_photons = 400000
-wave = np.arange(8., 50., 0.15) * u.Angstrom
+wave = np.arange(1.5, 50., 0.15) * u.Angstrom
+
 energies = wave.to(u.keV, equivalencies=u.spectral()).value
-outpath = get_path('raygrid')
 
 mypointing = DefaultPointing()
 
@@ -37,7 +37,7 @@ class PerfectArcusDet(PerfectArcus):
 
 
 for instrum, path in zip([ArcusDet(), PerfectArcusDet()],
-                         ['raygrid', 'raygrid-perfect']):
+                         ['raygrid-small', 'raygrid-perfect-small']):
     outpath = get_path(path)
 
     for i, e in enumerate(energies):

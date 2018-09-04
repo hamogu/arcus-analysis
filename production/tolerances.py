@@ -6,6 +6,9 @@ import astropy.units as u
 from astropy import table
 from arcus import tolerances as tol
 from marxs.simulator import Sequence
+from marxs.design.tolerancing import (wiggle, moveglobal, moveindividual,
+                                      varyattribute, varyorderselector, CaptureResAeff,
+                                      run_tolerances)
 from arcus.defaults import DefaultSource, DefaultPointing
 from arcus.arcus import PerfectArcus
 from arcus.ralfgrating import CATWindow, CATGratingwithL1
@@ -17,15 +20,11 @@ from utils import get_path
 n_photons = 200000
 #n_photons = 20000
 src = DefaultSource(energy=0.5)
-pnt = DefaultPointing()
 wave = np.array([15., 25., 37.]) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral())
 
-jitter_steps = np.array([0.5, 1., 1.5, 2., 5., 10., 20., 30., 60.]) * u.arcsec
 trans_steps = np.array([0., .1, .2, .4, .7, 1., 2., 5., 10.])
 rot_steps = np.deg2rad([0., 2., 5., 10., 15., 20., 25., 30., 40., 50., 60., 120., 180.]) / 60.
-# Ignore the fact that I'm running many iterations with pure zeros.
-# Can be fixed easily in higher numpy version where np.unique( ... axis=) works
 n_trans = len(trans_steps)
 n_rot = len(rot_steps)
 n = 3 * n_trans
@@ -36,210 +35,163 @@ for i in range(3):
 
 
 half = changeglobal.shape[0] / 2
-changeglobal[half:, :] = - changeglobal[:half, :]
-changeindividual = changeglobal[: half, :]
+changeglobal[int(half):, :] = - changeglobal[:int(half), :]
+changeindividual = changeglobal[: int(half), :]
+# Remove multiple entries with [0,0,0,0, ...]
+changeglobal = np.unique(changeglobal, axis=0)
+changeindividual = np.unique(changeindividual, axis=0)
 
-sigma_period = np.logspace(-6, -2, 13) * 0.0002
-changeperiod = np.zeros((len(sigma_period), 2))
-changeperiod[:, 0] = 0.0002
-changeperiod[:, 1] = sigma_period
 
-catflatness = np.deg2rad([[0., .1, .2, .4, .6, .8, 1.]]).T
-catbuckeling = np.deg2rad([[0., .25, .5, .75, 1., 1.5, 2., 3., 5]]).T
 
 scatter = np.array([0, .5, 1., 2., 4., 6., 8.])
 scatter = np.hstack([np.vstack([scatter, np.zeros_like(scatter)]),
                      np.vstack([np.zeros_like(scatter[1:]), scatter[1:]])])
 scatter = np.deg2rad(scatter / 3600.).T
 
-
-def rename_axes(tab):
-    '''Rename axes from x->z, y->x, and z->y in the translation and rotation
-
-    Some elements of Arcus are generated with the xyz2zxy matrix which changes
-    the order of the axes. This is the case for example for the SPOs where
-    the xyz2zxy matrix is part of the global definition. In other cases,
-    e.g. the CATs, the pos4d matrices are generated from the
-    Rowland torus, this is instead applied to individual elements.
-    Due to the order in which the misalignment matrices are applied, the SPOs
-    need to have the columns renamed, while the other parts do not.
-    '''
-    rename = [('tx', 'temp'), ('ty', 'tx'), ('tz', 'ty'), ('temp', 'tz'),
-              ('rx', 'temp'), ('ry', 'rx'), ('rz', 'ry'), ('temp', 'rz')]
-    for a, b in rename:
-        tab.rename_column(a, b)
+instrumfull = PerfectArcus(channels='1')
+analyser = tol.CaptureResAeff(Ageom=instrum.elements[0].area.to(u.cm**2),
+                              dispersion_coord='proj_x', orders=np.arange(-12, 5))
 
 
-def run_for_energies(energies,
-                     instrum_before, wigglefunc, wigglepars, instrum_after,
-                     outfile,
-                     parameters=['tx', 'ty', 'tz', 'rx', 'ry', 'rz'],
-                     xyz2zxy=False):
-    wave = energies.to(u.Angstrom, equivalencies=u.spectral())
+def run_for_energies(instrum_before, wigglefunc, wiggleparts, parameters,
+                     outfull, instrum):
     outtabs = []
     for i, e in enumerate(energies):
         src.energy = e.to(u.keV).value
         photons_in = src.generate_photons(n_photons)
-        photons_in = pnt(photons_in)
-
-        out = tol.CaptureResAeff(len(parameters), Ageom=instrum_before.elements[0].area.to(u.cm**2))
-        tol.singletolerance(photons_in,
-                            instrum_before,
-                            wigglefunc,
-                            wigglepars,
-                            instrum_after,
-                            out)
-        out.tab['energy'] = e
-        out.tab['wave'] = wave[i]
-        outtabs.append(out.tab)
+        photons_in = instrum_before(photons_in)
+        tab = table.Table(run_tolerances(photons_in, instrum, wigglefunc, wiggleparts,
+                                         parameters, analyzer))
+        tab['energy'] = e
+        tab['wave'] = wave[i]
+        outtabs.append(tab)
     dettab = table.vstack(outtabs)
-    if len(parameters) == 1:
-        dettab[parameters[0]] = dettab['Parameters'].data
-    else:
-        for i, c in enumerate(parameters):
-            dettab[c] = dettab['Parameters'].data[:, i]
-    if xyz2zxy:
-        rename_axes(dettab)
-
     outfull = os.path.join(get_path('tolerances'), outfile)
     dettab.write(outfull, overwrite=True)
     print('Writing {}'.format(outfull))
 
-# jitter
-instrum = PerfectArcus(channels='1')
-wave = energies.to(u.Angstrom, equivalencies=u.spectral())
-outtabs = []
-for i, e in enumerate(energies):
-    src.energy = e.to(u.keV).value
-    photons_in = src.generate_photons(n_photons)
 
-    out = tol.CaptureResAeff(1, Ageom=instrum.elements[0].area.to(u.cm**2))
-    for j, jit in enumerate(jitter_steps):
-        print('Working on jitter {}/{}'.format(j, len(jitter_steps)))
-        jitterpnt = DefaultPointing(jitter=jit)
-        p_out = jitterpnt(photons_in.copy())
-        p_out = instrum(p_out)
-        ind = np.isfinite(p_out['det_x']) & (p_out['probability'] > 0)
-        out(jit, p_out[ind], n_photons)
-        out.tab['energy'] = e
-        out.tab['wave'] = wave[i]
-    outtabs.append(out.tab)
-dettab = table.vstack(outtabs)
-dettab.write(os.path.join(get_path('tolerances'), 'jitter.fits'),
-             overwrite=True)
+def filter_noCCD(photons):
+    photons['probability'][~np.isfinite(photons['det_x'])] = 0
+    return photons
+
+
+class Arcus(PerfectArcus):
+    def post_process(self):
+        return []
+
+    def __init__(self):
+        super().__init__(channels='1')
+        self.elements.insert(0, DefaultPointing())
+        self.elements.append(filter_noCCD)
+
+# jitter
+def dummy(p):
+    '''Function needs something here, but nothing happens'''
+    return p
+
+instrum = Arcus()
+run_for_energies(dummy, varyattribute, instrum.elements[0],
+                 [{'jitter': j} for j in np.array([0.5, 1., 1.5, 2., 5., 10., 20., 30., 60.]) * u.arcsec],
+                 Sequence(elements=instrum.elements[1:]),
+                 'jitter.fits')
 
 # SPO scatter
-instrum = PerfectArcus(channels='1')
-run_for_energies(energies=energies,
-                 instrum_before=instrum.elements[0],
-                 wigglefunc=tol.ScatterVariation(instrum.elements[1],
-                                             ScatterPerChannel),
-                 wigglepars=scatter,
-                 instrum_after=Sequence(elements=instrum.elements[2:]),
-                 outfile='scatter.fits',
-                 parameters=['inplanescatter', 'perpplanescatter'])
-
+instrum = Arcus()
+run_for_energies(Sequence(elements=instrum.elements[:2]), varyattribute,
+                 instrum.elements[2].elements,
+                 [{'inplanescatter': a, 'perpplanescatter':b} for a, b in scatter],
+                 Sequence(elements=instrum.elements[2:]),
+                 'scatter.fits')
 
 # detectors
-instrum = PerfectArcus(channels='1')
-run_for_energies(energies=energies,
-                 instrum_before=Sequence(elements=instrum.elements[:5]),
-                 wigglefunc=tol.WiggleGlobalParallel(instrum.elements[5]),
-                 wigglepars=changeglobal,
-                 instrum_after=Sequence(elements=instrum.elements[6:]),
-                 outfile='detector_global.fits')
+def tabtolist(tab6):
+    l = [{'dx': a, 'dy': b, 'dz': c, 'rx': d, 'ry': e, 'rz': f}
+         for (a,b, c, d, e, f) in tab6]
+    return l
 
-instrum = PerfectArcus(channels='1')
-run_for_energies(energies=energies,
-                 instrum_before=Sequence(elements=instrum.elements[:5]),
-                 wigglefunc=tol.WiggleIndividualElements(instrum.elements[5]),
-                 wigglepars=changeindividual,
-                 instrum_after=Sequence(elements=instrum.elements[6:]),
-                 outfile='detector_individual.fits')
+instrum = Arcus()
+run_for_energies(instrum.elements[:6], moveglobal,
+                 instrum.elements[6],
+                 tab2list(changeglobal),
+                 Sequence(elements, instrum.elements[6:]),
+                 'detector_global.fits')
+
+
+instrum = Arcus()
+run_for_energies(instrum.elements[:6], moveindividual,
+                 instrum.elements[6],
+                 tab2list(changeglobal),
+                 Sequence(elements, instrum.elements[6:]),
+                 'detector_individual.fits')
 
 # CATs
-instrum = PerfectArcus(channels='1')
-run_for_energies(energies=energies,
-                 instrum_before=Sequence(elements=instrum.elements[:2]),
-                 wigglefunc=tol.WiggleGlobalParallel(instrum.elements[2]),
-                 wigglepars=changeglobal,
-                 instrum_after=Sequence(elements=instrum.elements[3:]),
-                 outfile='CAT_global.fits')
+instrum = Arcus()
+run_for_energies(instrum.elements[:3], moveglobal,
+                 instrum.elements[3],
+                 tab2list(changeglobal),
+                 Sequence(elements, instrum.elements[3:]),
+                 'CAT_global.fits')
 
-instrum = PerfectArcus(channels='1')
 # individual CATs are the elements of the CATWindows
-run_for_energies(energies=energies,
-                 instrum_before=Sequence(elements=instrum.elements[:2]),
-                 wigglefunc=tol.WiggleIndividualElements(instrum.elements[2],
-                                                         CATWindow),
-                 wigglepars=changeindividual,
-                 instrum_after=Sequence(elements=instrum.elements[3:]),
-                 outfile='CAT_individual.fits')
-# Windows are the elements of CATfromMechanical (which is instrum.elements[2])
-instrum = PerfectArcus(channels='1')
-run_for_energies(energies=energies,
-                 instrum_before=Sequence(elements=instrum.elements[:2]),
-                 wigglefunc=tol.WiggleIndividualElements(instrum.elements[2]),
-                 wigglepars=changeindividual,
-                 instrum_after=Sequence(elements=instrum.elements[3:]),
-                 outfile='CAT_window.fits')
+instrum = Arcus()
+run_for_energies(instrum.elements[:3], wiggle,
+                 instrum.elements_of_class(CATWindow),
+                 tab2list(changeindividual),
+                 Sequence(elements, isstrum.elements[3:]),
+                 'CAT_individual.fits')
+# Windows are the elements of CATfromMechanical (which is instrum.elements[3])
+instrum = Arcus()
+run_for_energies(instrum.elements[:3], wiggle,
+                 instrum.elements[3],
+                 tab2list(changeindividual),
+                 Sequence(elements, instrum.elements[3:]),
+                 'CAT_window.fits')
 
 # Period Variation
-instrum = PerfectArcus(channels='1')
-run_for_energies(energies=energies,
-                 instrum_before=Sequence(elements=instrum.elements[:2]),
-                 wigglefunc=tol.PeriodVariation(instrum.elements[2], CATGratingwithL1),
-                 wigglepars=changeperiod,
-                 instrum_after=Sequence(elements=instrum.elements[3:]),
-                 outfile='CAT_period.fits',
-                 parameters=['nominal', 'sigma'])
+instrum = Arcus()
+run_for_energies(instrum.elements[:3], varyperiod,
+                 instrum.elements_of_class(CATGratingwithL1),
+                 [{'period_mean': 0.0002, 'period_sigma': s} for s in np.logspace(-6, -2, 13) * 0.0002],
+                 Sequence(elements, instrum.elements[3:]),
+                 'CAT_period.fits')
+
 
 # CAT surfaceflatness
-instrum = PerfectArcus(channels='1')
-run_for_energies(energies=energies,
-                 instrum_before=Sequence(elements=instrum.elements[:2]),
-                 wigglefunc=tol.CATFlatnessVariation(instrum.elements[2], CATGratingwithL1),
-                 wigglepars=catflatness,
-                 instrum_after=Sequence(elements=instrum.elements[3:]),
-                 outfile='CAT_flatness.fits',
-                 parameters=['sigma'])
-# CAT buckeling
-instrum = PerfectArcus(channels='1')
-run_for_energies(energies=energies,
-                 instrum_before=Sequence(elements=instrum.elements[:2]),
-                 wigglefunc=tol.CATFlatnessVariation(instrum.elements[2],
-                                                     parallel_class=CATGratingwithL1,
-                                                     orderselector=tol.OrderSelectorTopHat),
-                 wigglepars=catbuckeling,
-                 instrum_after=Sequence(elements=instrum.elements[3:]),
-                 outfile='CAT_buckeling.fits',
-                 parameters=['fullwidth'])
+instrum = Arcus()
+run_for_energies(instrum.elements[:3], varyperiod,
+                 instrum.elements_of_class(CATGratingwithL1),
+                 [{'orderselector': tol.OrderSelectorWavy, 'wavysigma': s} for s in np.deg2rad([0., .1, .2, .4, .6, .8, 1.])],
+                 Sequence(elements, instrum.elements[3:]),
+                 'CAT_flatness.fits')
 
+# CAT buckeling
+run_for_energies(instrum.elements[:3], varyperiod,
+                 instrum.elements_of_class(CATGratingwithL1),
+                 [{'orderselector': tol.OrderSelectorTopHat, 'tophatwidth': s} for s in np.deg2rad([0., .25, .5, .75, 1., 1.5, 2., 3., 5])],
+                 Sequence(elements, instrum.elements[3:]),
+                 'CAT_buckeling.fits')
 
 # SPOs
 # increase size of aperture to make sure light reaches SPOs.
 # In practice thermal precolimators etc.will impose further restrictions.
-instrum = PerfectArcus(channels='1')
-instrum.elements[0].elements[0].pos4d[0, 1] += np.max(trans_steps)
-instrum.elements[0].elements[0].pos4d[1, 2] += np.max(trans_steps)
+instrum = Arcus()
+instrum.elements[1].elements[0].pos4d[0, 1] += np.max(trans_steps)
+instrum.elements[1].elements[0].pos4d[1, 2] += np.max(trans_steps)
 
-run_for_energies(energies=energies,
-                 instrum_before=Sequence(elements=instrum.elements[:1]),
-                 wigglefunc=tol.WiggleGlobalParallel(instrum.elements[1]),
-                 wigglepars=changeglobal,
-                 instrum_after=Sequence(elements=instrum.elements[2:]),
-                 outfile='SPOs_global.fits')
+run_for_energies(instrum.elements[:2], moveglobal,
+                 instrum.elements[2],
+                 tab2list(changeglobal),
+                 Sequence(elements, instrum.elements[2:]),
+                 'SPOs_global.fits')
 
-instrum = PerfectArcus(channels='1')
-instrum.elements[0].elements[0].pos4d[0, 1] += np.max(trans_steps)
-instrum.elements[0].elements[0].pos4d[1, 2] += np.max(trans_steps)
-run_for_energies(energies=energies,
-                 instrum_before=Sequence(elements=instrum.elements[:1]),
-                 wigglefunc=tol.WiggleIndividualElements(instrum.elements[1]),
-                 wigglepars=changeindividual,
-                 instrum_after=Sequence(elements=instrum.elements[2:]),
-                 outfile='SPOs_individual.fits')
+moveglobal(instrum.elements[2], 0, 0, 0, 0, 0, 0)
 
+run_for_energies(instrum.elements[:2], wiggle,
+                 instrum.elements[2],
+                 tab2list(changeindividual),
+                 Sequence(elements, instrum.elements[2:]),
+                 'SPOs_individual.fits')
 
 # Run default tolerance budget a few times
 n_budget = 50
@@ -280,44 +232,26 @@ print('Writing {}'.format(outfull))
 instrum = PerfectArcus(channels='1')  # Just to get Aeff below
 import arcus.ralfgrating as rg
 rg.CATWindow.elem_class = rg.NonParallelCATGrating
-catblazegradients = np.deg2rad(np.array([-2, -1.5, -1, -.5, -.17, 0., .17, .5, 1., 1.5, 2.]) / 30)
+rg.CATWindow.extra_elem_args['d_blaze_mm'] = 1. # any dummy value
 
-outtabs = []
-for i, e in enumerate(energies):
-    src.energy = e.to(u.keV).value
-    photons_in = src.generate_photons(n_photons)
-    photons_in = pnt(photons_in)
-    out = tol.CaptureResAeff(1, Ageom=instrum.elements[0].area.to(u.cm**2))
-    for j, grad in enumerate(catblazegradients):
-        print('Working on CAT gradient {}/{}'.format(j, len(catblazegradients)))
-        rg.CATWindow.extra_elem_args['d_blaze_mm'] = grad
-        instrum = PerfectArcus(channels='1')
-        p_out = instrum(photons_in.copy())
-        ind = np.isfinite(p_out['det_x']) & (p_out['probability'] > 0)
-        out(grad, p_out[ind], n_photons)
-        out.tab['energy'] = e
-        out.tab['wave'] = wave[i]
-    outtabs.append(out.tab)
-dettab = table.vstack(outtabs)
-dettab.write(os.path.join(get_path('tolerances'), 'blazegradient.fits'),
-             overwrite=True)
-
+instrum = Arcus()
+run_for_energies(instrum.elements[:3], varyattribute,
+                 instrum.elements_of_class(CATGratingwithL1),
+                 [{'d_blaze_mm': s} for s in np.deg2rad(np.array([-2, -1.5, -1, -.5, -.17, 0., .17, .5, 1., 1.5, 2.]) / 30)],
+                 Sequence(elements, instrum.elements[3:]),
+                 'blazegradient.fits')
 
 # More detailed analysis of Ralf's worst case gratings
 rg.CATWindow.elem_class = rg.GeneralLinearNonParallelCAT
 # add a rotation to correct for the blaze problem
-blazecorrect = np.zeros((13, 6))
-blazecorrect[:, 4] = np.deg2rad(np.arange(-1.2, 1.3, .2))
 
 for i, blazeargs in enumerate([(0.036, -0.8), (0.036, 0.8),
                                (-0.036, -0.8), (-0.036, 0.8)]):
     rg.CATWindow.extra_elem_args['d_blaze_mm'] = np.deg2rad(blazeargs[0])
     rg.CATWindow.extra_elem_args['blaze_center'] = np.deg2rad(blazeargs[1])
-    instrum = PerfectArcus(channels='1')
-    run_for_energies(energies=energies,
-                     instrum_before=Sequence(elements=instrum.elements[:2]),
-                     wigglefunc=tol.MoveIndividualParallel(instrum.elements[2],
-                                                           CATWindow),
-                     wigglepars=blazecorrect,
-                     instrum_after=Sequence(elements=instrum.elements[3:]),
-                     outfile='CAT_blaze_detail{}.fits'.format(i))
+    instrum = Arcus()
+    run_for_energies(instrum.elements[:3], moveindividual,
+                 instrum.elements_of_class(CATGratingwithL1),
+                 [{'ry': s} for s innp.deg2rad(np.arange(-1.2, 1.3, .2)) ],
+                 Sequence(elements, instrum.elements[3:]),
+                 f'CAT_blaze_detail{i}.fits')
