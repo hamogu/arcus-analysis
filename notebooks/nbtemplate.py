@@ -7,9 +7,9 @@ import subprocess
 from IPython.display import display, Markdown, HTML, Image
 
 try:
-    import configparser # Py 3
+    import configparser  # Py 3
 except ImportError:
-    import ConfigParser as configparser # Py 2
+    import ConfigParser as configparser  # Py 2
 
 __all__ = ['display_header', 'get_path', 'cfgpath', 'display_codetoggle']
 
@@ -76,6 +76,7 @@ def get_nb_status(filename):
     try:
         gitlog = subprocess.check_output(['git',  'log', '-1', '--use-mailmap',
                                           '--format=medium',  '--', filename])
+        gitlog = gitlog.decode(sys.stdout.encoding)
     except subprocess.CalledProcessError:
         return '''git is not installed or notebook was run outside of git version control.
         No versioning information can be displayed.'''
@@ -91,8 +92,9 @@ def get_nb_status(filename):
 - {0}
 - {2}
 '''.format(gitlog[0], gitlog[1], gitlog[2])
-        modified = filename in subprocess.check_output(['git', 'ls-files', '-m'])
-        if modified:
+        modifiedfiles = subprocess.check_output(['git', 'ls-files', '-m'])
+        modifiedfiles = modifiedfiles.decode(sys.stdout.encoding)
+        if filename in modifiedfiles:
             out = out + '''
 **The version shown here is modified compared to the last commited revision.**
 

@@ -11,8 +11,8 @@ from utils import get_path
 EQPegAspec = Table.read('../inputdata/EQPegA_flux.tbl', format='ascii',
                         names=['energy', 'flux'])
 # restrict table to ARCUS energy range
-EQPegAspec = EQPegAspec[(EQPegAspec['energy'] > 0.25) &
-                        (EQPegAspec['energy'] < 1.5)]
+EQPegAspec = EQPegAspec[(EQPegAspec['energy'] > 0.2) &
+                        (EQPegAspec['energy'] < 9.998)]
 
 coord = astropy.coordinates.SkyCoord.from_name("EQ Peg A")
 
