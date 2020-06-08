@@ -14,7 +14,7 @@ EQPegAspec = Table.read('../inputdata/EQPegA_flux.tbl', format='ascii',
 EQPegAspec = EQPegAspec[(EQPegAspec['energy'] > 0.2) &
                         (EQPegAspec['energy'] < 9.998)]
 
-coord = astropy.coordinates.SkyCoord.from_name("EQ Peg A")
+coord = astropy.coordinates.SkyCoord.from_name("EQ Peg")
 
 # define position and spectrum of source
 arc = Arcus()

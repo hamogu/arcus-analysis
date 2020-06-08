@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     For example:
     > python get_notebooknames.py "../html/" ".html"
-    will list he names of all html files for the website that are made by
+    will list the names of all html files for the website that are made by
     rendering notebooks.
     ''')
     parser.add_argument('prename',

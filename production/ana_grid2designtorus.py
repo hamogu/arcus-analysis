@@ -11,7 +11,7 @@ from utils import get_path
 outpath = get_path('grid2designtorus')
 outfile = os.path.join(outpath, 'summary.fits')
 
-orders = np.arange(-12, 1)
+orders = np.arange(-15, 4)
 filelist = glob(os.path.join(outpath, '*.fits'))
 
 filelist.sort()
@@ -21,7 +21,7 @@ wave0 = get_wave(load_prepare_table(filelist[0]))
 
 for f in filelist:
     # Output file from previous run - skip
-    if f == 'summary.fits':
+    if 'summary.fits' in f:
         continue
     print('{} - {}'.format(f, time.ctime()))
     out, wave = summarize_file(f, orders)
