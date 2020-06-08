@@ -1,4 +1,5 @@
 import os
+import argparse
 from copy import deepcopy
 import numpy as np
 import astropy.units as u
@@ -9,7 +10,9 @@ from marxs.design.tolerancing import (wiggle, moveglobal, moveindividual,
                                       varyattribute, varyorderselector,
                                       varyperiod,
                                       CaptureResAeff,
-                                      run_tolerances)
+                                      run_tolerances,
+                                      generate_6d_wigglelist,
+                                      run_tolerances_for_energies)
 from marxs.optics import CATGrating
 from arcus.defaults import DefaultSource, DefaultPointing
 from arcus.arcus import PerfectArcus
@@ -19,29 +22,17 @@ import arcus.tolerances as tol
 import arcus
 from utils import get_path
 
+parser = argparse.ArgumentParser(description='Run tolerancing simulations.')
+parser.add_argument('--n_photons', default=200000, type=int)
+args = parser.parse_args()
 
-n_photons = 200000
+
 src = DefaultSource(energy=0.5)
 wave = np.array([15., 25., 37.]) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral())
 
-trans_steps = np.array([0., .1, .2, .4, .7, 1., 2., 5., 10.])
-rot_steps = np.deg2rad([0., 2., 5., 10., 15., 20., 25., 30., 40., 50., 60., 120., 180.]) / 60.
-n_trans = len(trans_steps)
-n_rot = len(rot_steps)
-n = 3 * n_trans
-changeglobal = np.zeros((n_trans * 2 * 3 + n_rot  * 2 * 3, 6))
-for i in range(3):
-    changeglobal[i * n_trans: (i + 1) * n_trans, i] = trans_steps
-    changeglobal[n + i * n_rot: n + (i + 1) * n_rot, i + 3] = rot_steps
-
-
-half = changeglobal.shape[0] / 2
-changeglobal[int(half):, :] = - changeglobal[:int(half), :]
-changeindividual = changeglobal[: int(half), :]
-# Remove multiple entries with [0,0,0,0, ...]
-changeglobal = np.unique(changeglobal, axis=0)
-changeindividual = np.unique(changeindividual, axis=0)
+changeglobal, changeindividual = generate_6d_wigglelist([0., .1, .2, .4, .7, 1., 2., 5., 10.] * u.mm,
+                                                        [0., 2., 5., 10., 15., 20., 25., 30., 40., 50., 60., 120., 180.] * u.arcmin)
 
 
 scatter = np.array([0, .5, 1., 2., 4., 6., 8.])
@@ -56,24 +47,12 @@ analyzer = CaptureResAeff(A_geom=instrumfull.elements[0].area.to(u.cm**2),
 
 
 def run_for_energies(instrum_before, wigglefunc, wiggleparts, parameters,
-                     instrum, outfile):
-    outtabs = []
-    for i, e in enumerate(energies):
-        src.energy = e.to(u.keV).value
-        photons_in = src.generate_photons(n_photons)
-        photons_in = instrum_before(photons_in)
-        data = run_tolerances(photons_in, instrum,
-                              wigglefunc, wiggleparts,
-                              parameters, analyzer)
-        # convert tab into a table.
-        # astropy.tables has problems with Quantities as input
-        tab = table.Table([{d: data[i][d].value
-                            if isinstance(data[i][d], u.Quantity) else data[i][d]
-                            for d in data[i]} for i in range(len(data))])
-        tab['energy'] = e
-        tab['wave'] = wave[i]
-        outtabs.append(tab)
-    dettab = table.vstack(outtabs)
+                     instrum, outfile, reset=None):
+    dettab = run_tolerances_for_energies(src, energies,
+                                         instrum_before, instrum,
+                                         wigglefunc, wiggleparts, parameters,
+                                         analyzer, reset=reset,
+                                         t_source=args.n_photons)
     # For column with dtype object
     # This happens only when the input is the orderselector, so we can special
     # special case that here
@@ -103,112 +82,110 @@ class Arcus(PerfectArcus):
         self.elements.insert(0, DefaultPointing())
         self.elements.append(filter_noCCD)
 
-# jitter
-def dummy(p):
-    '''Function needs something here, but nothing happens'''
-    return p
-
-instrum = Arcus()
-run_for_energies(dummy, varyattribute, instrum.elements[0],
-                 [{'jitter': j} for j in np.array([0.5, 1., 1.5, 2., 5., 10., 20., 30., 60.]) * u.arcsec],
-                 instrum,
-                 'jitter.fits')
-
-# SPO scatter
-instrum = Arcus()
-run_for_energies(Sequence(elements=instrum.elements[:2]), varyattribute,
-                 instrum.elements[2].elements[1],
-                 [{'inplanescatter': a, 'perpplanescatter':b} for a, b in scatter],
-                 Sequence(elements=instrum.elements[2:]),
-                 'scatter.fits')
-
-# detectors
-def tab2list(tab6):
-    l = [{'dx': a, 'dy': b, 'dz': c, 'rx': d, 'ry': e, 'rz': f}
-         for (a,b, c, d, e, f) in tab6]
-    return l
-
-instrum = Arcus()
-run_for_energies(Sequence(elements=instrum.elements[:9]), moveglobal,
-                 instrum.elements[9],
-                 tab2list(changeglobal),
-                 Sequence(elements=instrum.elements[9:]),
-                 'detector_global.fits')
+reset_6d = {'dx': 0., 'dy': 0., 'dz': 0., 'rx': 0., 'ry': 0., 'rz': 0.}
 
 
-instrum = Arcus()
-run_for_energies(Sequence(elements=instrum.elements[:9]), moveindividual,
-                 instrum.elements[9],
-                 tab2list(changeglobal),
-                 Sequence(elements=instrum.elements[9:]),
-                 'detector_individual.fits')
+# # jitter
+# def dummy(p):
+#     '''Function needs something here, but nothing happens'''
+#     return p
 
-# CATs
-instrum = Arcus()
-run_for_energies(Sequence(elements=instrum.elements[:3]), moveglobal,
-                 instrum.elements[3].elements[0],
-                 tab2list(changeglobal),
-                 Sequence(elements=instrum.elements[3:]),
-                 'CAT_global.fits')
+# instrum = Arcus()
+# run_for_energies(dummy, varyattribute, instrum.elements[0],
+#                  [{'jitter': j} for j in np.array([0.5, 1., 1.5, 2., 5., 10., 20., 30., 60.]) * u.arcsec],
+#                  instrum,
+#                  'jitter.fits')
 
-# individual CATs are the elements of the CATWindows
-instrum = Arcus()
-run_for_energies(Sequence(elements=instrum.elements[:3]), wiggle,
-                 instrum.elements_of_class(CATWindow),
-                 tab2list(changeindividual),
-                 Sequence(elements=instrum.elements[3:]),
-                 'CAT_individual.fits')
-# Windows are the elements of CATfromMechanical (which is instrum.elements[3])
-instrum = Arcus()
-run_for_energies(Sequence(elements=instrum.elements[:3]), wiggle,
-                 instrum.elements[3].elements[0],
-                 tab2list(changeindividual),
-                 Sequence(elements=instrum.elements[3:]),
-                 'CAT_window.fits')
+# # SPO scatter
+# instrum = Arcus()
+# run_for_energies(Sequence(elements=instrum.elements[:2]), varyattribute,
+#                  instrum.elements[2].elements[1],
+#                  [{'inplanescatter': a, 'perpplanescatter':b} for a, b in scatter],
+#                  Sequence(elements=instrum.elements[2:]),
+#                  'scatter.fits')
 
-# Period Variation
-instrum = Arcus()
-run_for_energies(Sequence(elements=instrum.elements[:3]), varyperiod,
-                 instrum.elements_of_class(CATGrating),
-                 [{'period_mean': 0.0002, 'period_sigma': s} for s in np.logspace(-6, -2, 13) * 0.0002],
-                 Sequence(elements=instrum.elements[3:]),
-                 'CAT_period.fits')
+# # detectors
+# instrum = Arcus()
+# run_for_energies(Sequence(elements=instrum.elements[:9]), moveglobal,
+#                  instrum.elements[9],
+#                  changeglobal,
+#                  Sequence(elements=instrum.elements[9:]),
+#                  'detector_global.fits')
 
 
-# CAT surfaceflatness
-instrum = Arcus()
-run_for_energies(Sequence(elements=instrum.elements[:3]), varyattribute,
-                 instrum.elements_of_class(CATGrating),
-                 [{'order_selector': tol.OrderSelectorWavy(wavysigma=s)} for s in np.deg2rad([0., .1, .2, .4, .6, .8, 1.])],
-                 Sequence(elements=instrum.elements[3:]),
-                 'CAT_flatness.fits')
+# instrum = Arcus()
+# run_for_energies(Sequence(elements=instrum.elements[:9]), moveindividual,
+#                  instrum.elements[9],
+#                  changeglobal,
+#                  Sequence(elements=instrum.elements[9:]),
+#                  'detector_individual.fits')
 
-# CAT buckeling
-run_for_energies(Sequence(elements=instrum.elements[:3]), varyattribute,
-                 instrum.elements_of_class(CATGrating),
-                 [{'order_selector': tol.OrderSelectorTopHat(tophatwidth=s)} for s in np.deg2rad([0., .25, .5, .75, 1., 1.5, 2., 3., 5])],
-                 Sequence(elements=instrum.elements[3:]),
-                 'CAT_buckeling.fits')
+# # CATs
+# instrum = Arcus()
+# run_for_energies(Sequence(elements=instrum.elements[:3]), moveglobal,
+#                  instrum.elements[3].elements[0],
+#                  changeglobal,
+#                  Sequence(elements=instrum.elements[3:]),
+#                  'CAT_global.fits')
 
-# SPOs
-# increase size of aperture to make sure light reaches SPOs.
-# In practice thermal precolimators etc.will impose further restrictions.
-instrum = Arcus()
-instrum.elements[1].elements[0].pos4d[0, 1] += np.max(trans_steps)
-instrum.elements[1].elements[0].pos4d[1, 2] += np.max(trans_steps)
+# # individual CATs are the elements of the CATWindows
+# instrum = Arcus()
+# run_for_energies(Sequence(elements=instrum.elements[:3]), wiggle,
+#                  instrum.elements_of_class(CATWindow),
+#                  changeindividual,
+#                  Sequence(elements=instrum.elements[3:]),
+#                  'CAT_individual.fits')
+# # Windows are the elements of CATfromMechanical (which is instrum.elements[3])
+# instrum = Arcus()
+# run_for_energies(Sequence(elements=instrum.elements[:3]), wiggle,
+#                  instrum.elements[3].elements[0],
+#                  changeindividual,
+#                  Sequence(elements=instrum.elements[3:]),
+#                  'CAT_window.fits')
 
-run_for_energies(Sequence(elements=instrum.elements[:2]), moveglobal,
-                 instrum.elements[2].elements[0],
-                 tab2list(changeglobal),
-                 Sequence(elements=instrum.elements[2:]),
-                 'SPOs_global.fits')
+# # Period Variation
+# instrum = Arcus()
+# run_for_energies(Sequence(elements=instrum.elements[:3]), varyperiod,
+#                  instrum.elements_of_class(CATGrating),
+#                  [{'period_mean': 0.0002, 'period_sigma': s} for s in np.logspace(-6, -2, 13) * 0.0002],
+#                  Sequence(elements=instrum.elements[3:]),
+#                  'CAT_period.fits')
 
 
-run_for_energies(Sequence(elements=instrum.elements[:2]), wiggle,
-                 instrum.elements[2].elements[0],
-                 tab2list(changeindividual),
-                 Sequence(elements=instrum.elements[2:]),
-                 'SPOs_individual.fits')
+# # CAT surfaceflatness
+# instrum = Arcus()
+# run_for_energies(Sequence(elements=instrum.elements[:3]), varyattribute,
+#                  instrum.elements_of_class(CATGrating),
+#                  [{'order_selector': tol.OrderSelectorWavy(wavysigma=s)} for s in np.deg2rad([0., .1, .2, .4, .6, .8, 1.])],
+#                  Sequence(elements=instrum.elements[3:]),
+#                  'CAT_flatness.fits')
+
+# # CAT buckeling
+# run_for_energies(Sequence(elements=instrum.elements[:3]), varyattribute,
+#                  instrum.elements_of_class(CATGrating),
+#                  [{'order_selector': tol.OrderSelectorTopHat(tophatwidth=s)} for s in np.deg2rad([0., .25, .5, .75, 1., 1.5, 2., 3., 5])],
+#                  Sequence(elements=instrum.elements[3:]),
+#                  'CAT_buckeling.fits')
+
+# # SPOs
+# # increase size of aperture to make sure light reaches SPOs.
+# # In practice thermal precolimators etc.will impose further restrictions.
+# instrum = Arcus()
+# instrum.elements[1].elements[0].pos4d[0, 1] += np.max(trans_steps)
+# instrum.elements[1].elements[0].pos4d[1, 2] += np.max(trans_steps)
+
+# run_for_energies(Sequence(elements=instrum.elements[:2]), moveglobal,
+#                  instrum.elements[2].elements[0],
+#                  changeglobal,
+#                  Sequence(elements=instrum.elements[2:]),
+#                  'SPOs_global.fits')
+
+
+# run_for_energies(Sequence(elements=instrum.elements[:2]), wiggle,
+#                  instrum.elements[2].elements[0],
+#                  changeindividual,
+#                  Sequence(elements=instrum.elements[2:]),
+#                  'SPOs_individual.fits')
 
 # Run default tolerance budget a few times
 n_budget = 50
@@ -228,7 +205,7 @@ for i in range(n_budget):
 
     for e in energies:
         src.energy = e.to(u.keV).value
-        photons_in = src.generate_photons(n_photons)
+        photons_in = src.generate_photons(args.n_photons)
         photons_in = DefaultPointing()(photons_in)
         photons = arc(photons_in)
         # good = (photons['probability'] > 0) & (photons['CCD'] > 0)
@@ -263,7 +240,7 @@ class CATL1L2Stack(rg.FlatStack):
     keywords = [{'order_selector': rg.globalorderselector,
                  'd': 0.0002,
                  'd_blaze_mm': 1,
-                 'blaze_center': 0.},  # any dummy value
+                 'blaze_center': 0.},
                 {'d': 0.005,
                  'order_selector': rg.l1orderselector,
                  'groove_angle': np.pi / 2.},
@@ -289,21 +266,7 @@ rg.CATWindow = CATWindow
 
 instrum = Arcus()
 run_for_energies(Sequence(elements=instrum.elements[:3]), varyattribute,
-                 instrum.elements_of_class(rg.NonParallelCATGrating),
+                 instrum.elements_of_class(rg.GeneralLinearNonParallelCAT),
                  [{'d_blaze_mm': s} for s in np.deg2rad(np.array([-2, -1.5, -1, -.5, -.17, 0., .17, .5, 1., 1.5, 2.]) / 30)],
                  Sequence(elements=instrum.elements[3:]),
                  'blazegradient.fits')
-
-# More detailed analysis of Ralf's worst case gratings
-# add a rotation to correct for the blaze problem
-
-for i, blazeargs in enumerate([(0.036, -0.8), (0.036, 0.8),
-                               (-0.036, -0.8), (-0.036, 0.8)]):
-    rg.CATL1L2Stack.keywords[0]['d_blaze_mm'] = np.deg2rad(blazeargs[0])
-    rg.CATL1L2Stack.keywords[0]['blaze_center'] = np.deg2rad(blazeargs[1])
-    instrum = Arcus()
-    run_for_energies(Sequence(elements=instrum.elements[:3]), moveindividual,
-                 instrum.elements_of_class(rg.NonParallelCATGrating),
-                 [{'ry': s} for s in np.deg2rad(np.arange(-1.2, 1.3, .2)) ],
-                 Sequence(elements=instrum.elements[3:]),
-                 f'CAT_blaze_detail{i}.fits')
