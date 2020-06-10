@@ -14,8 +14,10 @@ energies = wave.to(u.keV, equivalencies=u.spectral()).value
 
 mypointing = DefaultPointing()
 
-for instrum, path in zip([Arcus(), PerfectArcus()],
-                         ['raygrid-small', 'raygrid-perfect-small']):
+for instrum, path in zip([Arcus(),
+                          PerfectArcus()],
+                         ['raygrid',
+                          'raygrid-perfect']):
     outpath = get_path(path)
 
     for i, e in enumerate(energies):
