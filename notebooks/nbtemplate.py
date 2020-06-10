@@ -1,15 +1,9 @@
 '''This module collects utilities for the Arcus notebooks.'''
-from __future__ import print_function
-
 import sys
 import os
 import subprocess
+import configparser
 from IPython.display import display, Markdown, HTML, Image
-
-try:
-    import configparser  # Py 3
-except ImportError:
-    import ConfigParser as configparser  # Py 2
 
 __all__ = ['display_header', 'get_path', 'cfgpath', 'display_codetoggle']
 
@@ -138,9 +132,7 @@ def get_path(name):
     '''
     conf = configparser.ConfigParser()
     cfgfile = conf.read(cfgpath)
-    if cfgfile:
-        print("Reading config file with path definitions: {}".format(cfgfile))
-    else:
+    if not cfgfile:
         raise Exception("No config file with path specifications found. File must be called 'site.py' and be located in one of the following directories: {}".format(cfgpath))
     path = conf.get("Path", name)
     if not os.path.exists(path):
@@ -149,8 +141,10 @@ def get_path(name):
 
 
 def display_codetoggle():
-    '''Display button "show code on/off". Calling this function
-    toggles off. Call this at the end of a notebook after all processing steps have run.
-    Otherwise, newly run cell will have prompts.
+    '''Display button "show code on/off".
+
+    Calling this function toggles off. Call this at the end of a notebook after
+    all processing steps have run.  Otherwise, newly run cell will have
+    prompts.
     '''
     display(codetoggle)
