@@ -5,3 +5,5 @@
 *.ipynb_checkpoints*
 # Mac thumbnails
 .DS_Store
+
+nb_proc/

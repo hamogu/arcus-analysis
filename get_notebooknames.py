@@ -22,13 +22,13 @@ if __name__ == '__main__':
     rendering notebooks.
     ''')
     parser.add_argument('prename',
-                        help='directory patter to be prefixed')
+                        help='directory pattern to be prefixed')
     parser.add_argument('postname',
                         help='file extension to be post-fixed')
     args = parser.parse_args()
 
     with open('website/toc.yaml', 'r') as f:
-        pagelist = yaml.load(f)
+        pagelist = yaml.safe_load(f)
 
     names = []
     get_nbnames(names, pagelist)
