@@ -20,6 +20,11 @@ children:
         type: notebook
         href: RowlandGeometry
         caption: Rowland Geometry
+      -
+        title: Placing channels to avoid chip gaps
+        type: notebook
+        href: Channel_offset
+        caption: Channels
   - 
     title: Choosing the parameters of the Arcus optical design
     type: included
@@ -62,8 +67,3 @@ children:
         type: notebook
         href: Tolerances
         caption: Alignment tolerances
-      - 
-        title: Boom misalignment
-        type: notebook
-        href: BoomMisalignment
-        caption: Misalignment
