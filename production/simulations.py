@@ -1,4 +1,4 @@
-from os.path import join as pjoin
+from os.path import join
 import time
 import numpy as np
 import astropy.units as u
@@ -15,30 +15,32 @@ energies = wave.to(u.keV, equivalencies=u.spectral()).value
 mypointing = DefaultPointing()
 
 for instrum, path in zip([Arcus(),
-                          PerfectArcus()],
+                          PerfectArcus()
+                      ],
                          ['raygrid',
-                          'raygrid-perfect']):
+                          'raygrid-perfect'
+                      ]):
     outpath = get_path(path)
 
-    for i, e in enumerate(energies):
+    for i in range(len(wave)):
         print('{0}/{1} = {2}'.format(i + 1, len(energies), time.ctime()))
-        mysource = DefaultSource(energy=e)
+        mysource = DefaultSource(energy=energies[i])
 
         photons = mysource.generate_photons(n_photons)
         photons = mypointing(photons)
         photons = instrum(photons)
 
-        photons.write(pjoin(outpath,
+        photons.write(join(outpath,
                             'wave{0:05.2f}.fits'.format(wave.value[i])),
                       overwrite=True)
     aeffRfromraygrid(outpath, instrum.elements[0], defaultconf,
-                     pjoin(get_path('arcus'), path + 'RAeff.fits'))
+                     join(get_path('arcus'), path + 'RAeff.fits'))
 
-csv_per_order(pjoin(get_path('arcus'), 'raygridRAeff.fits'), 'Aeff4',
-              pjoin(get_path('figures'), 'Aeff.csv'))
-csv_per_order(pjoin(get_path('arcus'), 'raygridRAeff.fits'), 'R4',
-              pjoin(get_path('figures'), 'R.csv'))
-csv_per_order(pjoin(get_path('arcus'), 'raygrid-perfectRAeff.fits'), 'Aeff4',
-              pjoin(get_path('figures'), 'Aeff-perfect.csv'))
-csv_per_order(pjoin(get_path('arcus'), 'raygrid-perfectRAeff.fits'), 'R4',
-              pjoin(get_path('figures'), 'R-perfect.csv'))
+csv_per_order(join(get_path('arcus'), 'raygridRAeff.fits'), 'Aeff4',
+              join(get_path('figures'), 'Aeff.csv'))
+csv_per_order(join(get_path('arcus'), 'raygridRAeff.fits'), 'R4',
+              join(get_path('figures'), 'R.csv'))
+csv_per_order(join(get_path('arcus'), 'raygrid-perfectRAeff.fits'), 'Aeff4',
+              join(get_path('figures'), 'Aeff-perfect.csv'))
+csv_per_order(join(get_path('arcus'), 'raygrid-perfectRAeff.fits'), 'R4',
+              join(get_path('figures'), 'R-perfect.csv'))
