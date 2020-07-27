@@ -60,7 +60,7 @@ children:
       - 
         title: Predict R and Aeff
         type: notebook
-        href: CATmerrit
+        href: Performance_metrics
         caption: R, Aeff
       - 
         title: Tolerances
