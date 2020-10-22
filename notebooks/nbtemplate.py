@@ -49,12 +49,12 @@ def get_marxs_status():
 def get_arcus_status():
     try:
         with DisableLogger():
-            import arcus.version
+            import arcus.version as v
     except ImportError:
         return 'ARCUS cannot be imported. No version information is available.'
-    return 'ARCUS python code version {} (commit hash: {} from {})'.format(arcus.version.version,
-                                                                          arcus.version.githash[:10],
-                                                                          arcus.version.timestamp.date())
+    return 'ARCUS python code version {} (commit hash: {} from {})'.format(v.version,
+                                                                           v.githash[:10],
+                                                                           v.timestamp.date())
 
 
 def get_caldb_status():
