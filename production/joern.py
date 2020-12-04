@@ -1,4 +1,3 @@
-from __future__ import print_function
 from os.path import join as pjoin
 import time
 import numpy as np
