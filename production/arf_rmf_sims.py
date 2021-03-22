@@ -18,14 +18,15 @@ from arcus.instrument.constants import xyz2zxy
 from utils import get_path
 
 n_photons = 5e5
-#wave = np.arange(1.5, 60., 1.) * u.Angstrom
+wave = np.arange(1.5, 60., 1.) * u.Angstrom
+wave = np.array([1.25, 70, 85, 100, 120]) * u.Angstrom
 #wave = np.arange(50.5, 61.9, 1.) * u.Angstrom
-wave = np.array([42]) * u.Angstrom
+#wave = np.array([42]) * u.Angstrom
 
 energies = wave.to(u.keV, equivalencies=u.spectral())
 
 mypointing = DefaultPointing()
-channel = '2'
+channel = '1'
 
 '''400000 photons with all columns saved is about 162 MB. So, for
 larger runs, defintely need to limit the columns saved to those that I
@@ -90,5 +91,5 @@ for i, (en, wav) in enumerate(zip(energies, wave)):
                           'circ_phi', 'circ_y'])
     photons = photons[photons['probability'] > 0]
     photons.write(join(outpath,
-                           'test2wave{0:05.2f}.fits'.format(wav.value)),
+                           'wave{0:05.2f}.fits'.format(wav.value)),
                       overwrite=True)

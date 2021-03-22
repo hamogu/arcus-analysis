@@ -3,6 +3,9 @@ import sys
 import os
 import subprocess
 import configparser
+import re
+import logging
+
 from IPython.display import display, Markdown, HTML, Image
 
 __all__ = ['display_header', 'get_path', 'cfgpath', 'display_codetoggle']
@@ -10,12 +13,14 @@ __all__ = ['display_header', 'get_path', 'cfgpath', 'display_codetoggle']
 cfgpath = [os.path.join(os.path.dirname(sys.modules[__name__].__file__), '..', 'site.cfg')]
 'Path list to search for configuration files.'
 
-import logging
+
 class DisableLogger():
     def __enter__(self):
-       logging.disable(logging.CRITICAL)
+        logging.disable(logging.CRITICAL)
+
     def __exit__(self, a, b, c):
-       logging.disable(logging.NOTSET)
+        logging.disable(logging.NOTSET)
+
 
 codetoggle = HTML('''<script>
 code_show=true;
@@ -35,15 +40,25 @@ $( document ).ready(code_toggle);
 
 logo = Image('logos/logo.png', height=80, width=80)
 
+reexp = re.compile(r"(?P<version>[\d.dev]+[\d]+)[+]?(g(?P<gittag>\w+))?[.]?(d(?P<dirtydate>[\d]+))?")
+
+
+def parse_git_scm_version(version):
+    ver = reexp.match(version)
+    v = ver.group('version')
+    if not ver.group('gittag') is None:
+        v += ' (commit hash: ' + ver.group('gittag') + ')'
+    if not ver.group('dirtydate') is None:
+        v += ' (Date of dirty version: ' + ver.group('dirtydate') + ')'
+    return v
+
 
 def get_marxs_status():
     try:
-        import marxs.version
+        import marxs.version as mvers
     except ImportError:
         return 'MARXS cannot be imported. No version information is available.'
-    return 'MARXS ray-trace code version {} (commit hash: {} from {})'.format(marxs.version.version,
-                                                                             marxs.version.githash[:10],
-                                                                             marxs.version.timestamp.date())
+    return 'MARXS ray-trace code version ' + parse_git_scm_version(mvers.version)
 
 
 def get_arcus_status():
@@ -52,18 +67,16 @@ def get_arcus_status():
             import arcus.version as v
     except ImportError:
         return 'ARCUS cannot be imported. No version information is available.'
-    return 'ARCUS python code version {} (commit hash: {} from {})'.format(v.version,
-                                                                           v.githash[:10],
-                                                                           v.timestamp.date())
+    return 'ARCUS python code version ' + parse_git_scm_version(v.version)
 
 
 def get_caldb_status():
     try:
         with DisableLogger():
-            from arcus import load_csv
+            from arcus import utils
     except ImportError:
         return 'ARCUS CALDB cannot be imported. No version information is available.'
-    return 'ARCUS CALDB version ' + load_csv.string_git_info()
+    return 'ARCUS CALDB version ' + utils.git_hash.decode() + ' (' + utils.git_info.decode()[:19] + ')'
 
 
 def get_nb_status(filename):
