@@ -124,11 +124,9 @@ See git commit log for full revision history.
 Code was last run with:
 
 - {marxs}
-- {arcus}
 - {caldb}
 '''.format(nbstatus=get_nb_status(filename),
            marxs=get_marxs_status(),
-           arcus=get_arcus_status(),
            caldb=get_caldb_status())
     return Markdown(out)
 
