@@ -61,19 +61,10 @@ def get_marxs_status():
     return 'MARXS ray-trace code version ' + parse_git_scm_version(mvers.version)
 
 
-def get_arcus_status():
-    try:
-        with DisableLogger():
-            import arcus.version as v
-    except ImportError:
-        return 'ARCUS cannot be imported. No version information is available.'
-    return 'ARCUS python code version ' + parse_git_scm_version(v.version)
-
-
 def get_caldb_status():
     try:
         with DisableLogger():
-            from arcus import utils
+            from marxs.missions.arcus import utils
     except ImportError:
         return 'ARCUS CALDB cannot be imported. No version information is available.'
     return 'ARCUS CALDB version ' + utils.git_hash.decode() + ' (' + utils.git_info.decode()[:19] + ')'
