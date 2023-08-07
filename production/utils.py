@@ -1,14 +1,9 @@
 import sys
 import os
+import configparser
 
 cfgpath = [os.path.join(os.path.dirname(sys.modules[__name__].__file__), '..', 'site.cfg')]
 'Path list to search for configuration files.'
-
-
-try:
-    import configparser # Py 3
-except ImportError:
-    import ConfigParser as configparser # Py 2
 
 def get_path(name):
     '''Get path name info from site.cfg file in root directory.

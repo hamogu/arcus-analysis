@@ -1,29 +1,37 @@
 import os
 import argparse
-from copy import deepcopy
 import numpy as np
 import astropy.units as u
-from astropy import table
-from arcus import tolerances
-from marxs.simulator import Sequence
+from astropy.table import Table
 from marxs.design.tolerancing import (wiggle, moveglobal, moveindividual,
-                                      varyattribute, varyorderselector,
-                                      varyperiod,
-                                      CaptureResAeff,
-                                      run_tolerances,
-                                      generate_6d_wigglelist,
-                                      run_tolerances_for_energies)
-from marxs.optics import CATGrating
-from arcus.defaults import DefaultSource, DefaultPointing
-from arcus.arcus import PerfectArcus
-from arcus.ralfgrating import CATWindow
-from arcus.spo import ScatterPerChannel
-import arcus.tolerances as tol
-import arcus
+                                      varyattribute, varyperiod,
+                                      generate_6d_wigglelist)
+from marxs.analysis.gratings import CaptureResAeff_CCDgaps
+from marxs.missions.arcus import arcus
+from marxs.missions.arcus.defaults import DefaultPointing, DefaultSource
+from marxs.missions.athena.spo import ScatterPerChannel, SPOChannelMirror
+from marxs.missions.arcus import ralfgrating
+from marxs.missions.mitsnl.catgrating import NonParallelCATGrating
+import marxs.missions.mitsnl.tolerances as tol
+from marxs.optics import aperture
+from marxs.design.tolerancing import run_tolerances_for_energies2
+from marxs.missions.arcus.utils import config
+
 from utils import get_path
 
+conf = arcus.defaultconf
+
+
 parser = argparse.ArgumentParser(description='Run tolerancing simulations.')
-parser.add_argument('--n_photons', default=200000, type=int)
+parser.add_argument('--n_photons', default=200000, type=int,
+                    help='Number of photons per simulation')
+parser.add_argument('--n_baseline_budget', default=100, type=int,
+                    help='Number of baseline mislignment simulations to run ' +
+                    '(This parameter has no effect is baseline_budget is not in the list of scenarios.)')
+parser.add_argument('-s',  '--scenario', action="extend", nargs="+", type=str,
+                    help='Specify which scenarios to to run. If argument is not set, all test will be run.')
+parser.add_argument('-e', '--exclude', action="extend", nargs="+", type=str,
+                    help='Exclude specific scenarios from running')
 args = parser.parse_args()
 
 
@@ -31,8 +39,65 @@ src = DefaultSource(energy=0.5)
 wave = np.array([15., 25., 37.]) * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral())
 
-changeglobal, changeindividual = generate_6d_wigglelist([0., .1, .2, .4, .7, 1., 2., 5., 10.] * u.mm,
-                                                        [0., 2., 5., 10., 15., 20., 25., 30., 40., 50., 60., 120., 180.] * u.arcmin)
+def run_n_errorbudgets(align, conf, n=50, n_photons=200_000):
+    '''Run Arcus R/Aeff simulations for a particular set of alignment tolerances
+
+    Parameters
+    ----------
+    align : list
+        Error budget in the Randall-Smith form
+    conf : dict
+        Configuration dictionary. In particular, the alignment tolerance table in
+        that dict determines the aligments for the runs.
+    n : int
+        Number of simulations. The first simulation is always run with a perfect
+        instrument for comparison, so ``n=50`` will get 49 simulations with random
+        misalignments.
+    n_photons : int
+        Number of photons for each simulation.
+
+    Returns
+    -------
+    tab : `astropy.table.Table`
+        Table with results. The first row is a run with a perfect instrument for
+        comparison, the remaining rows are runs with random realizations of the
+        alignment tolerances in `conf`.
+    '''
+    out = []
+
+    for i in range(n):
+        print('Run tolerance budget: {}/{}'.format(i, n))
+
+        arcus.reformat_randall_errorbudget(align, globalfac=None)
+        conf['alignmentbudget'] = align
+
+        if i == 0:
+            arc = arcus.PerfectArcus(channels='1')
+        else:
+            arc = arcus.Arcus(channels='1', conf=conf)
+
+        for e in energies:
+            src.energy = e
+            photons_in = src.generate_photons(n_photons * u.s)
+            photons_in = DefaultPointing()(photons_in)
+            photons = arc(photons_in)
+
+            out.append(analyzer(photons))
+            out[-1]['energy'] = e.to(u.keV, equivalencies=u.spectral()).value
+            out[-1]['run'] = i
+
+    tab = Table([{d: out[i][d].value
+                  if isinstance(out[i][d], u.Quantity) else out[i][d]
+                  for d in out[i]} for i in range(len(out))])
+
+    tab['energy'].unit = u.keV
+    tab['wave'] = tab['energy'].to(u.Angstrom, equivalencies=u.spectral())
+    return tab
+
+translation_list = [0., .1, .2, .4, .7, 1., 2., 5., 10.] * u.mm
+rotation_list = [0., 2., 5., 10., 15., 20., 25., 30., 40., 50., 60., 120., 180.] * u.arcmin
+changeglobal, changeindividual = generate_6d_wigglelist(translation_list,
+                                                        rotation_list)
 
 
 scatter = np.array([0, .5, 1., 2., 4., 6., 8.])
@@ -40,40 +105,26 @@ scatter = np.hstack([np.vstack([scatter, np.zeros_like(scatter)]),
                      np.vstack([np.zeros_like(scatter[1:]), scatter[1:]])])
 scatter = np.deg2rad(scatter / 3600.).T
 
-instrumfull = PerfectArcus(channels='1')
-analyzer = CaptureResAeff(A_geom=instrumfull.elements[0].area.to(u.cm**2),
+instrumfull = arcus.PerfectArcus(channels='1')
+
+# In general, we measure the resolving power from an ideal, circular detector. That's very, very
+# close to detectors on the rowland circle, and it saves us from dealing with chip gaps.
+# However, if we actually want to wiggle the detectors, then we actually need to measure
+# the results on the detectors, thus the specific analyzer for that case.
+analyzer = CaptureResAeff_CCDgaps(A_geom=instrumfull.elements[0].area.to(u.cm**2),
+                          dispersion_coord='circ_phi',
+                          orders=np.arange(-12, 5),
+                          aeff_filter_col='CCD')
+analyzer_det = CaptureResAeff_CCDgaps(A_geom=instrumfull.elements[0].area.to(u.cm**2),
                           dispersion_coord='proj_x',
-                          orders=np.arange(-12, 5))
-
-
-def run_for_energies(instrum_before, wigglefunc, wiggleparts, parameters,
-                     instrum, outfile, reset=None):
-    dettab = run_tolerances_for_energies(src, energies,
-                                         instrum_before, instrum,
-                                         wigglefunc, wiggleparts, parameters,
-                                         analyzer, reset=reset,
-                                         t_source=args.n_photons)
-    # For column with dtype object
-    # This happens only when the input is the orderselector, so we can special
-    # special case that here
-    if 'order_selector' in dettab.colnames:
-        o0 = dettab['order_selector'][0]
-        if hasattr(o0, 'sigma'):
-            dettab['sigma'] = [o.sigma for o in dettab['order_selector']]
-        elif hasattr(o0, 'tophatwidth'):
-            dettab['tophatwidth'] = [o.tophatwidth for o in dettab['order_selector']]
-        dettab.remove_column('order_selector')
-    outfull = os.path.join(get_path('tolerances'), outfile)
-    dettab.write(outfull, overwrite=True)
-    print('Writing {}'.format(outfull))
-
+                          orders=np.arange(-12, 5),
+                          aeff_filter_col='CCD')
 
 def filter_noCCD(photons):
     photons['probability'][~np.isfinite(photons['det_x'])] = 0
     return photons
 
-
-class Arcus(PerfectArcus):
+class Arcus(arcus.PerfectArcus):
     def post_process(self):
         return []
 
@@ -82,191 +133,88 @@ class Arcus(PerfectArcus):
         self.elements.insert(0, DefaultPointing())
         self.elements.append(filter_noCCD)
 
-reset_6d = {'dx': 0., 'dy': 0., 'dz': 0., 'rx': 0., 'ry': 0., 'rz': 0.}
+arcus_eff_tab = Table.read(os.path.join(config['data']['caldb_inputdata'],
+                                        'gratings', 'efficiency.csv'), format='ascii.ecsv')
 
+def increase_aperture_size(instrum, pars):
+    '''
+    Increase size of aperture to make sure light reaches SPOs.
+    In practice thermal precolimators etc.will impose further restrictions.
+    '''
+    max_size_increase = np.max(translation_list).to(u.mm).value
+    for elem in instrum.elements_of_class(aperture.RectangleAperture):
+        elem.pos4d[0, 1] += max_size_increase
+        elem.pos4d[1, 2] += max_size_increase
 
-# # jitter
-# def dummy(p):
-#     '''Function needs something here, but nothing happens'''
-#     return p
+runs = {'jitter': (DefaultPointing, analyzer, varyattribute,
+                  [{'jitter': j} for j in np.array([0.1, 0.2, 0.25, 0.5, 1., 1.5, 2., 5., 10., 20.]) * u.arcsec]),
+        'scatter': (ScatterPerChannel, analyzer, varyattribute,
+                   [{'inplanescatter': a, 'perpplanescatter':b} for a, b in scatter]),
+        'detector_global': (arcus.DetCamera, analyzer_det, moveglobal, changeglobal),
+        'detector_individual': (arcus.DetCamera, analyzer_det, moveindividual, changeglobal),
+        'CAT_global': (ralfgrating.CATfromMechanical, analyzer, moveglobal, changeglobal),
+        'CAT_window': (ralfgrating.CATfromMechanical, analyzer, wiggle, changeindividual),
+        'CAT_individual': (ralfgrating.CATWindow, analyzer, wiggle, changeindividual),
+        'CAT_period': (NonParallelCATGrating, analyzer, varyperiod,
+                       [{'period_mean': 0.0002, 'period_sigma': s} for s in np.logspace(-6, -2, 13) * 0.0002]),
+        'CAT_flatness': (NonParallelCATGrating, analyzer, varyattribute,
+                         [{'order_selector': tol.OrderSelectorWavy(wavysigma=s, tab=arcus_eff_tab)} for s in np.deg2rad([0., .1, .2, .4, .6, .8, 1.])]),
+        'CAT_buckling': (NonParallelCATGrating, analyzer, varyattribute,
+                         [{'order_selector': tol.OrderSelectorTopHat(tophatwidth=s, tab=arcus_eff_tab)} for s in np.deg2rad([0., .25, .5, .75, 1., 1.5, 2., 3., 5])]),
+        'blazegradient': (NonParallelCATGrating, analyzer, varyattribute,
+                          [{'d_blaze_mm': s} for s in np.deg2rad(np.array([-2, -1.5, -1, -.5, -.17, 0., .17, .5, 1., 1.5, 2.]) / 30)]),
+        'SPOs_global': (SPOChannelMirror, analyzer, moveglobal, changeglobal, increase_aperture_size),
+        'SPOs_individual': (SPOChannelMirror, analyzer, wiggle, changeindividual, increase_aperture_size),
+        'baseline_budget': (None),
+            }
+'''
+Format for the runs: dict with entries:  name: (element, wigglefunc, parameters, preparefunc)
+name : string -
+    Name of run, also use as filename
+element : marx simulation elements
+analyser : Marxs analyser funcstion
+wigglefunc : function
+parameters : list
+preparefunc (optional) : function
+    Will be executed before the test run, use this to modify the instrument in preparation
+'''
 
-# instrum = Arcus()
-# run_for_energies(dummy, varyattribute, instrum.elements[0],
-#                  [{'jitter': j} for j in np.array([0.5, 1., 1.5, 2., 5., 10., 20., 30., 60.]) * u.arcsec],
-#                  instrum,
-#                  'jitter.fits')
+if args.scenario is None:
+    scenarios = runs.keys()
+else:
+    scenarios = args.scenario
 
-# # SPO scatter
-# instrum = Arcus()
-# run_for_energies(Sequence(elements=instrum.elements[:2]), varyattribute,
-#                  instrum.elements[2].elements[1],
-#                  [{'inplanescatter': a, 'perpplanescatter':b} for a, b in scatter],
-#                  Sequence(elements=instrum.elements[2:]),
-#                  'scatter.fits')
+if args.exclude is not None:
+    scenarios = [e for e in scenarios if e not in args.exclude]
 
-# # detectors
-# instrum = Arcus()
-# run_for_energies(Sequence(elements=instrum.elements[:9]), moveglobal,
-#                  instrum.elements[9],
-#                  changeglobal,
-#                  Sequence(elements=instrum.elements[9:]),
-#                  'detector_global.fits')
+print('Running the following scenarios:', scenarios)
 
-
-# instrum = Arcus()
-# run_for_energies(Sequence(elements=instrum.elements[:9]), moveindividual,
-#                  instrum.elements[9],
-#                  changeglobal,
-#                  Sequence(elements=instrum.elements[9:]),
-#                  'detector_individual.fits')
-
-# # CATs
-# instrum = Arcus()
-# run_for_energies(Sequence(elements=instrum.elements[:3]), moveglobal,
-#                  instrum.elements[3].elements[0],
-#                  changeglobal,
-#                  Sequence(elements=instrum.elements[3:]),
-#                  'CAT_global.fits')
-
-# # individual CATs are the elements of the CATWindows
-# instrum = Arcus()
-# run_for_energies(Sequence(elements=instrum.elements[:3]), wiggle,
-#                  instrum.elements_of_class(CATWindow),
-#                  changeindividual,
-#                  Sequence(elements=instrum.elements[3:]),
-#                  'CAT_individual.fits')
-# # Windows are the elements of CATfromMechanical (which is instrum.elements[3])
-# instrum = Arcus()
-# run_for_energies(Sequence(elements=instrum.elements[:3]), wiggle,
-#                  instrum.elements[3].elements[0],
-#                  changeindividual,
-#                  Sequence(elements=instrum.elements[3:]),
-#                  'CAT_window.fits')
-
-# # Period Variation
-# instrum = Arcus()
-# run_for_energies(Sequence(elements=instrum.elements[:3]), varyperiod,
-#                  instrum.elements_of_class(CATGrating),
-#                  [{'period_mean': 0.0002, 'period_sigma': s} for s in np.logspace(-6, -2, 13) * 0.0002],
-#                  Sequence(elements=instrum.elements[3:]),
-#                  'CAT_period.fits')
-
-
-# # CAT surfaceflatness
-# instrum = Arcus()
-# run_for_energies(Sequence(elements=instrum.elements[:3]), varyattribute,
-#                  instrum.elements_of_class(CATGrating),
-#                  [{'order_selector': tol.OrderSelectorWavy(wavysigma=s)} for s in np.deg2rad([0., .1, .2, .4, .6, .8, 1.])],
-#                  Sequence(elements=instrum.elements[3:]),
-#                  'CAT_flatness.fits')
-
-# # CAT buckeling
-# run_for_energies(Sequence(elements=instrum.elements[:3]), varyattribute,
-#                  instrum.elements_of_class(CATGrating),
-#                  [{'order_selector': tol.OrderSelectorTopHat(tophatwidth=s)} for s in np.deg2rad([0., .25, .5, .75, 1., 1.5, 2., 3., 5])],
-#                  Sequence(elements=instrum.elements[3:]),
-#                  'CAT_buckeling.fits')
-
-# # SPOs
-# # increase size of aperture to make sure light reaches SPOs.
-# # In practice thermal precolimators etc.will impose further restrictions.
-# instrum = Arcus()
-# instrum.elements[1].elements[0].pos4d[0, 1] += np.max(trans_steps)
-# instrum.elements[1].elements[0].pos4d[1, 2] += np.max(trans_steps)
-
-# run_for_energies(Sequence(elements=instrum.elements[:2]), moveglobal,
-#                  instrum.elements[2].elements[0],
-#                  changeglobal,
-#                  Sequence(elements=instrum.elements[2:]),
-#                  'SPOs_global.fits')
-
-
-# run_for_energies(Sequence(elements=instrum.elements[:2]), wiggle,
-#                  instrum.elements[2].elements[0],
-#                  changeindividual,
-#                  Sequence(elements=instrum.elements[2:]),
-#                  'SPOs_individual.fits')
-
-# Run default tolerance budget a few times
-n_budget = 50
-out = []
-
-conf = deepcopy(arcus.arcus.defaultconf)
-
-for i in range(n_budget):
-    print('Run default tolerance budget: {}/{}'.format(i, n_budget))
-    align = deepcopy(arcus.arcus.align_requirement_smith)
-    arcus.arcus.reformat_randall_errorbudget(align, globalfac=None)
-    conf['alignmentbudget'] = align
-    if i == 0:
-        arc = PerfectArcus(channels='1')
+for outfile in scenarios:
+    pars = runs[outfile]
+    instrum = Arcus()
+    if outfile == 'baseline_budget':
+        align = arcus.align_requirement_smith
+        tab = run_n_errorbudgets(align, conf, n=args.n_baseline_budget,
+                                 n_photons=args.n_photons)
     else:
-        arc = arcus.arcus.Arcus(channels='1', conf=conf)
+        if len(pars) > 4:
+            pars[4](instrum, pars)
+        tab = run_tolerances_for_energies2(src, energies, instrum,
+                                           pars[0], pars[2], pars[3],
+                                           pars[1],
+                                           t_source=args.n_photons * u.s)
 
-    for e in energies:
-        src.energy = e.to(u.keV).value
-        photons_in = src.generate_photons(args.n_photons)
-        photons_in = DefaultPointing()(photons_in)
-        photons = arc(photons_in)
-        # good = (photons['probability'] > 0) & (photons['CCD'] > 0)
-        # out([i, src.energy], photons[good], n_photons)
-        out.append(analyzer(photons))
-        out[-1]['energy'] = e.value
-        out[-1]['run'] = i
+    # For column with dtype object
+    # This happens only when the input is the orderselector, so we can special
+    # special case that here
+    if 'order_selector' in tab.colnames:
+        o0 = tab['order_selector'][0]
+        if hasattr(o0, 'sigma'):
+            tab['sigma'] = [o.sigma for o in tab['order_selector']]
+        elif hasattr(o0, 'tophatwidth'):
+            tab['tophatwidth'] = [o.tophatwidth for o in tab['order_selector']]
+        tab.remove_column('order_selector')
 
-tab = table.Table([{d: out[i][d].value
-                    if isinstance(out[i][d], u.Quantity) else out[i][d]
-                    for d in out[i]} for i in range(len(out))])
-
-tab['energy'].unit = u.keV
-tab['wave'] = tab['energy'].to(u.Angstrom, equivalencies=u.spectral())
-
-outfull = os.path.join(get_path('tolerances'), 'baseline_budget.fits')
-tab.write(outfull, overwrite=True)
-print('Writing {}'.format(outfull))
-
-
-# This one should be part of step 1, but needs to be run at the end of the
-# script because it monkey-patches the definition of Arcus and we
-# do not want to mess up any of the other runs.
-instrum = PerfectArcus(channels='1')  # Just to get Aeff below
-import arcus.ralfgrating as rg
-
-class CATL1L2Stack(rg.FlatStack):
-    elements = [rg.GeneralLinearNonParallelCAT,
-                rg.CATGratingL1,
-                rg.L2,
-                rg.RandomGaussianScatter]
-    keywords = [{'order_selector': rg.globalorderselector,
-                 'd': 0.0002,
-                 'd_blaze_mm': 1,
-                 'blaze_center': 0.},
-                {'d': 0.005,
-                 'order_selector': rg.l1orderselector,
-                 'groove_angle': np.pi / 2.},
-                {},
-                {'scatter': rg.l2diffraction}]
-    def __init__(self, **kwargs):
-        kwargs['elements'] = self.elements
-        kwargs['keywords'] = self.keywords
-        super().__init__(**kwargs)
-
-
-class CATWindow(rg.Parallel):
-
-    id_col = 'facet'
-
-    def __init__(self, **kwargs):
-        kwargs['id_col'] = self.id_col
-        kwargs['elem_class'] = CATL1L2Stack
-        super().__init__(**kwargs)
-
-
-rg.CATWindow = CATWindow
-
-instrum = Arcus()
-run_for_energies(Sequence(elements=instrum.elements[:3]), varyattribute,
-                 instrum.elements_of_class(rg.GeneralLinearNonParallelCAT),
-                 [{'d_blaze_mm': s} for s in np.deg2rad(np.array([-2, -1.5, -1, -.5, -.17, 0., .17, .5, 1., 1.5, 2.]) / 30)],
-                 Sequence(elements=instrum.elements[3:]),
-                 'blazegradient.fits')
+    outfull = os.path.join(get_path('tolerances'), outfile + '.fits')
+    tab.write(outfull, overwrite=True)
+    print('Writing {}'.format(outfull))

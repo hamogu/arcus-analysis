@@ -1,18 +1,19 @@
 import os
 import numpy as np
-from astropy.table import Table
+from astropy.table import QTable
 import astropy.table
+import astropy.units as u
 
-from arcus import Arcus
-from arcus.defaults import DefaultSource, DefaultPointing
+from marxs.missions.arcus.arcus import Arcus
+from marxs.missions.arcus.defaults import DefaultSource, DefaultPointing
 
 from utils import get_path
 
-EQPegAspec = Table.read('../inputdata/EQPegA_flux.tbl', format='ascii',
-                        names=['energy', 'flux'])
+EQPegAspec = QTable.read('../inputdata/EQPegA_flux.tbl', format='ascii',
+                        names=['energy', 'fluxdensity'], units=[u.keV, 1/ u.s / u.cm**2 / u.keV])
 # restrict table to ARCUS energy range
-EQPegAspec = EQPegAspec[(EQPegAspec['energy'] > 0.2) &
-                        (EQPegAspec['energy'] < 9.998)]
+EQPegAspec = EQPegAspec[(EQPegAspec['energy'] > 0.2 * u.keV) &
+                        (EQPegAspec['energy'] < 9.998 * u.keV)]
 
 coord = astropy.coordinates.SkyCoord.from_name("EQ Peg")
 
@@ -20,10 +21,10 @@ coord = astropy.coordinates.SkyCoord.from_name("EQ Peg")
 arc = Arcus()
 mysource = DefaultSource(coords=coord, energy=EQPegAspec,
                          geomarea=arc.elements[0].area,
-                         flux=(EQPegAspec['flux'][1:] * np.diff(EQPegAspec['energy'])).sum())
+                         flux=(EQPegAspec['fluxdensity'][1:] * np.diff(EQPegAspec['energy'])).sum())
 mypointing = DefaultPointing(coords=coord)
 
-photons = mysource.generate_photons(1e5)
+photons = mysource.generate_photons(1e5 * u.s)
 photons = mypointing(photons)
 photons = arc(photons)
 

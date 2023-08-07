@@ -1,32 +1,83 @@
 ''' '''
-from __future__ import print_function
-import time
+import configparser
 import os
+import time
+import sys
+
 import numpy as np
 import astropy.units as u
-import arcus.arcus
-from arcus.defaults import DefaultSource, DefaultPointing
-from arcus.generate_rowland import make_rowland_from_d_BF_R_f
-from arcus.ralfgrating import (CATL1L2Stack, RectangularGrid,
-                               InterpolateRalfTable,
-                               RalfQualityFactor,
-                               catsupport,
-                               catsupportbars)
-from transforms3d.axangles import axangle2aff, axangle2mat
-from marxs.simulator import Sequence
+from astropy.table import Table
+from openpyxl import load_workbook
 
-from utils import get_path
-outpath = get_path('grid2designtorus')
+from marxs.missions.arcus.defaults import DefaultSource, DefaultPointing
+from marxs.missions.arcus.generate_rowland import make_rowland_from_d_BF_R_f
+from marxs.missions.arcus.arcus import defaultconf
+from marxs.missions.arcus.ralfgrating import RegularGrid
+from marxs.missions.arcus.spo import spos_large, spos_large_pos4d
+from marxs.missions.arcus.arcus import PerfectArcus
+from marxs.missions.mitsnl.catgrating import InterpolateEfficiencyTable
 
-n_photons = 10000
-wave = np.arange(8., 50.1, 1.) * u.Angstrom
+
+cfgpath = [os.path.join(os.path.dirname(sys.modules[__name__].__file__), '..', 'site.cfg')]
+'Path list to search for configuration files.'
+
+def get_path(name):
+    '''Get path name info from site.cfg file in root directory.
+
+    If a path does not exist, it will be created.
+    '''
+    conf = configparser.ConfigParser()
+    cfgfile = conf.read(cfgpath)
+    if not cfgfile:
+        raise Exception("No config file with path specifications found. File must be called 'site.py' and be located in one of the following directories: {}".format(cfgpath))
+    path = conf.get("Path", name)
+    if not os.path.exists(path):
+        os.makedirs(path)
+    return path
+
+
+conf = defaultconf.copy()
+conf['spo_geom'] = spos_large
+conf['spo_pos4d'] = spos_large_pos4d
+
+class BigSPOArcus(PerfectArcus):
+    gratings_class = RegularGrid
+
+
+def sheet_to_table(sheet):
+    # construct column names
+    colnames = [sheet['B8'].value, sheet['C8'].value] + [cell.value for cell in sheet[9][3:]]
+    # read data
+    tab = Table([a for a in sheet.iter_cols(min_row=10, min_col=2, values_only=True)],
+                names=colnames)
+    # add units
+    tab['wavelength'].unit = u.Unit(sheet['B9'].value.replace('[', '').replace(']', ''))
+    tab['angle'].unit = u.Unit(sheet['C9'].value.replace('[', '').replace(']', ''))
+    # Read meta data, which is saved at fixed location
+    for i in [2,3,4,5]:
+        tab.meta[sheet.cell(row=i, column=2).value] = sheet.cell(row=i, column=3).value * u.Unit(sheet.cell(row=i, column=4).value)
+    tab.meta[sheet.cell(row=6, column=2).value] = sheet.cell(row=6, column=3).value
+
+    # Drop the last three columns which have formulas in them
+    tab.keep_columns(tab.colnames[:-3])
+    return tab
+
+efficiency = {}
+wb = load_workbook('../inputdata/RCWA_for_grating_parameters.xlsx')
+for sheet in wb.sheetnames[1:]:
+    efficiency[sheet] = sheet_to_table(wb[sheet])
+    efficiency[sheet].meta['sheetname'] = sheet
+
+n_photons = 20000
+wave = np.arange(8., 40.1, 1.) * u.Angstrom
+#wave = [10., 15., 20., 25., 30., 35., 37.5] * u.Angstrom
 energies = wave.to(u.keV, equivalencies=u.spectral()).value
 
 mypointing = DefaultPointing()
 mysource = DefaultSource()
 
 # Make input photon list with grid of discrete energies
-photons_in = mysource.generate_photons(n_photons * len(wave))
+photons_in = mysource.generate_photons(n_photons * len(wave) * u.s)
 photons_in = mypointing(photons_in)
 
 for i, e in enumerate(energies):
@@ -34,91 +85,25 @@ for i, e in enumerate(energies):
 
 
 arr_R = np.arange(5900., 6001., 100.)
-arr_d_BF = np.arange(500., 701., 50.)
+arr_d_BF = np.arange(550., 751., 50.)
 arr_blaze = np.arange(1.2, 2.21, 0.2)
 
-
-class CATGratings(Sequence):
-    order_selector_class = InterpolateRalfTable
-    gratquality_class = RalfQualityFactor
-    grid_width_x = 200
-    grid_width_y = 300
-
-    def __init__(self, conf, channels=['1', '2', '1m', '2m'], **kwargs):
-
-        elements = []
-
-        self.order_selector = self.order_selector_class()
-        self.gratquality = self.gratquality_class()
-        blazemat = axangle2mat(np.array([0, 0, 1]),
-                               np.deg2rad(-conf['blazeang']))
-        blazematm = axangle2mat(np.array([0, 0, 1]),
-                                np.deg2rad(conf['blazeang']))
-
-        gratinggrid = {'d_element': 32., 'z_range': [1e4, 1.4e4],
-                       'elem_class': CATL1L2Stack,
-                       'elem_args': {'zoom': [1., 13.5, 13.]},
-                       'parallel_spec': np.array([1., 0., 0., 0.])
-                   }
-        for chan in channels:
-            gratinggrid['rowland'] = conf['rowland_' + chan]
-            b = blazematm if 'm' in chan else blazemat
-            gratinggrid['elem_args']['orientation'] = b
-            gratinggrid['normal_spec'] = conf['pos_opt_ax'][chan].copy()
-            xm, ym = conf['pos_opt_ax'][chan][:2].copy()
-            sig = 1 if '1' in chan else -1
-            x_range = [-self.grid_width_x + xm,
-                       +self.grid_width_x + xm]
-            y_range = [sig * (600 - ym - self.grid_width_y),
-                       sig * (600 - ym + self.grid_width_y)]
-            y_range.sort()
-            elements.append(RectangularGrid(x_range=x_range, y_range=y_range,
-                                            id_num_offset=arcus.arcus.id_num_offset[chan],
-                                            **gratinggrid))
-        elements.extend([catsupport, catsupportbars, self.gratquality])
-        super(CATGratings, self).__init__(elements=elements, **kwargs)
-
-
-class Arcus(arcus.arcus.PerfectArcus):
-    gratings_class = CATGratings
-
-
-def tiltCATGratings(instrum, defaultblaze, blaze):
-    '''Tilt Arcus gratings.
-
-    In the early days of this script, my code would place the gratings
-    on the Rowlandtorus depending on the input values in the conf
-    dictionary.
-    However, with the more mature design, the position and location of the
-    gratings is read from CATfromMechanical. This function will twist those
-    gratings to keep he position consistent, but experiment with different
-    blaze angles.
-    '''
-    rot = np.deg2rad(blaze - defaultblaze)
-    grats = instrum.elements_of_class(CATL1L2Stack)
-    for g in grats:
-        rotmat = axangle2aff(g.geometry['e_z'][:3], rot)
-        newpos = rotmat @ g.geometry.pos4d
-        g.geometry.pos4d = newpos
-        for ge in g.elements:
-            g.geometry.pos4d = newpos
-
-
-for R in arr_R:
+def iterate_dBFblaze(photons_in, arr_d_BF, arr_blaze, conf, R, f=11880., metainfo={}, prefix=''):
     for d_BF in arr_d_BF:
-        conf = make_rowland_from_d_BF_R_f(d_BF, R, 11880.)
-        for k in ['phi_det_start', 'n_CCDs']:
-            conf[k] = arcus.arcus.defaultconf[k]
+        conf = conf | make_rowland_from_d_BF_R_f(d_BF, R, f)
         for blaze in arr_blaze:
             conf['blazeang'] = blaze
-            filename = '{:04.0f}_{:04.1f}_{:05.0f}.fits'.format(d_BF, blaze, R)
-            filepath = os.path.join(outpath, filename)
+            filename = f'{prefix}{d_BF:04.0f}_{blaze:04.1f}_{R:05.0f}.fits'
+            filepath = os.path.join(get_path('grid2designtorus'), filename)
+            # This is a trick for parallelization.
+            # Write file if working on it - and if file exist skip.
+            # So, can start several workers in independent terminals.
             if os.path.isfile(filepath):
                 continue
             else:
                 photons_in.write(filepath)
                 print('d_BF: {:4.0f} mm - blaze: {:4.1f} deg - R: {:5.0f} mm - {}'.format(d_BF, blaze, R, time.ctime()))
-                instrum = Arcus(channels=['1'], conf=conf)
+                instrum = BigSPOArcus(channels=['1'], conf=conf)
                 #tiltCATGratings(instrum, arcus.arcus.defaultconf['blazeang'], blaze)
                 photons_out = instrum(photons_in.copy())
                 photons_out.meta['TORUS_R'] = R
@@ -128,8 +113,23 @@ for R in arr_R:
                 photons_out.meta['D_CHAN'] = d_BF
                 photons_out.meta['N_PHOT'] = n_photons
                 photons_out.meta['A_GEOM'] = instrum.elements[0].area.to(u.cm**2).value
+                photons_out.meta.update(metainfo)
                 # Keep only those columns absolutely needed for analysis
                 # to reduce file size
                 photons_out.keep_columns(['energy', 'probability', 'order',
-                                          'circ_phi', 'circ_y'])
+                                          'circ_phi'])
                 photons_out.write(filepath, overwrite=True)
+
+
+for sheet in efficiency.keys():
+    conf['order_selector'] = InterpolateEfficiencyTable(efficiency[sheet])
+    # Currently, marx does not have tables for transmission through materials
+    # other than Si and for coated gratings more complex stuff will happen anyway.
+    # So, just treat Si part of bar here. L1 is as deep as the grating bars itself.
+    # Won't make a difference fir these simulations, but for full consistency
+    # does not hurt to set it here.
+    bardepth, barwidth, out = sheet.split('-')
+    conf['gratinggrid']['elem_args']['l1_dims']['bardepth'] = bardepth * u.micrometer
+    iterate_dBFblaze(photons_in, arr_d_BF, arr_blaze, conf, R=5900, f=11880.,
+                     prefix=sheet, metainfo={'grattype': sheet})
+
