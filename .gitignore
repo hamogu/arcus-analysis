@@ -7,3 +7,11 @@
 .DS_Store
 
 nb_proc/
+# LaTeX
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+papers/Doubletiltconcept/doubletiltconcept.pdf
