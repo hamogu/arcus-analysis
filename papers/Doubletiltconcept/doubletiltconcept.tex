@@ -14,19 +14,19 @@
 %% can be invoked like this:
 %%
 %% \documentclass[arguments]{aastex631}
-%% 
+%%
 %% where the layout options are:
 %%
 %%  twocolumn   : two text columns, 10 point font, single spaced article.
 %%                This is the most compact and represent the final published
 %%                derived PDF copy of the accepted manuscript from the publisher
 %%  manuscript  : one text column, 12 point font, double spaced article.
-%%  preprint    : one text column, 12 point font, single spaced article.  
+%%  preprint    : one text column, 12 point font, single spaced article.
 %%  preprint2   : two text columns, 12 point font, single spaced article.
 %%  modern      : a stylish, single text column, 12 point font, article with
 %% 		  wider left and right margins. This uses the Daniel
 %% 		  Foreman-Mackey and David Hogg design.
-%%  RNAAS       : Supresses an abstract. Originally for RNAAS manuscripts 
+%%  RNAAS       : Supresses an abstract. Originally for RNAAS manuscripts
 %%                but now that abstracts are required this is obsolete for
 %%                AAS Journals. Authors might need it for other reasons. DO NOT
 %%                use \begin{abstract} and \end{abstract} with this style.
@@ -36,19 +36,19 @@
 %% There are other optional arguments one can invoke to allow other stylistic
 %% actions. The available options are:
 %%
-%%   astrosymb    : Loads Astrosymb font and define \astrocommands. 
-%%   tighten      : Makes baselineskip slightly smaller, only works with 
+%%   astrosymb    : Loads Astrosymb font and define \astrocommands.
+%%   tighten      : Makes baselineskip slightly smaller, only works with
 %%                  the twocolumn substyle.
 %%   times        : uses times font instead of the default
 %%   linenumbers  : turn on lineno package.
 %%   trackchanges : required to see the revision mark up and print its output
-%%   longauthor   : Do not use the more compressed footnote style (default) for 
+%%   longauthor   : Do not use the more compressed footnote style (default) for
 %%                  the author/collaboration/affiliations. Instead print all
-%%                  affiliation information after each name. Creates a much 
-%%                  longer author list but may be desirable for short 
+%%                  affiliation information after each name. Creates a much
+%%                  longer author list but may be desirable for short
 %%                  author papers.
 %% twocolappendix : make 2 column appendix.
-%%   anonymous    : Do not show the authors, affiliations and acknowledgments 
+%%   anonymous    : Do not show the authors, affiliations and acknowledgments
 %%                  for dual anonymous review.
 %%
 %% these can be used in any combination, e.g.
@@ -73,9 +73,6 @@
 %% using \newcommand. Your macros should appear before
 %% the \begin{document} command.
 %%
-\newcommand{\vdag}{(v)^\dagger}
-\newcommand\aastex{AAS\TeX}
-\newcommand\latex{La\TeX}
 
 %% Reintroduced the \received and \accepted commands from AASTeX v5.2
 %\received{March 1, 2021}
@@ -87,7 +84,7 @@
 %\submitjournal{PSJ}
 
 %% For manuscript that include authors in collaborations, AASTeX v6.31
-%% builds on the \collaboration command to allow greater freedom to 
+%% builds on the \collaboration command to allow greater freedom to
 %% keep the traditional author+affiliation information but only show
 %% subsets. The \collaboration command now must appear AFTER the group
 %% of authors in the collaboration and it takes TWO arguments. The last
@@ -98,11 +95,11 @@
 %% collaboration the \nocollaboration command is used. This command takes
 %% one argument which is also the number of authors above to show. A
 %% dashed line is shown to indicate no collaboration. This example manuscript
-%% shows how these commands work to display specific set of authors 
+%% shows how these commands work to display specific set of authors
 %% on the front page.
 %%
-%% For manuscript without any need to use \collaboration the 
-%% \AuthorCollaborationLimit command from v6.2 can still be used to 
+%% For manuscript without any need to use \collaboration the
+%% \AuthorCollaborationLimit command from v6.2 can still be used to
 %% show a subset of authors.
 %
 %\AuthorCollaborationLimit=2
@@ -135,10 +132,10 @@
 \shorttitle{Double Tilted Rowland Spectrograph}
 \shortauthors{G\"unther et al.}
 %%
-%% You can add a light gray and diagonal water-mark to the first page 
+%% You can add a light gray and diagonal water-mark to the first page
 %% with this command:
 %% \watermark{text}
-%% where "text", e.g. DRAFT, is the text to appear.  If the text is 
+%% where "text", e.g. DRAFT, is the text to appear.  If the text is
 %% long you can control the water-mark size with:
 %% \setwatermarkfontsize{dimension}
 %% where dimension is any recognized LaTeX dimension, e.g. pt, in, etc.
@@ -147,6 +144,8 @@
 \graphicspath{{./}{figures/}}
 %% This is the end of the preamble.  Indicate the beginning of the
 %% manuscript itself with \begin{document}.
+
+\usepackage{amsmath}
 
 \begin{document}
 
@@ -179,33 +178,18 @@
 \affiliation{}
 
 \begin{abstract}
-
-This example manuscript is intended to serve as a tutorial and template for
-authors to use when writing their own AAS Journal articles. The manuscript
-includes a history of \aastex\ and documents the new features in the
-previous versions as well as the bug fixes in version 6.31. This
-manuscript includes many figure and table examples to illustrate these new
-features.  Information on features not explicitly mentioned in the article
-can be viewed in the manuscript comments or more extensive online
-documentation. Authors are welcome replace the text, tables, figures, and
-bibliography with their own and submit the resulting manuscript to the AAS
-Journals peer review system.  The first lesson in the tutorial is to remind
-authors that the AAS Journals, the Astrophysical Journal (ApJ), the
-Astrophysical Journal Letters (ApJL), the Astronomical Journal (AJ), and
-the Planetary Science Journal (PSJ) all have a 250 word limit for the 
-abstract\footnote{Abstracts for Research Notes of the American Astronomical 
-Society (RNAAS) are limited to 150 words}.  If you exceed this length the
-Editorial office will ask you to shorten it. This abstract has 182 words.
+High-resolution spectroscopy in soft X-rays ($<2$~keV) requires diffractive elements to resolve any astrophysically relevant diagnostics, such as closely spaced lines, weak absorption lines, or line profiles. For transmission gratings, the Rowland torus geometry describes how gratings and detectors need to be positioned to optimize the spectral resolving power. We describe how an on-axis Rowland geometry can be tilted to accommodate blazed gratings. In this geometry, two channels with separate optical axes can share the same detectors (double tilted Rowland spectrograph, DTRS). Small offsets between the channels can mitigate the effect of chip gaps and reduce the alignment requirements during the construction of the instrument. The DTRS concept is especially useful for sub-apertured mirrors, because it allows an effective use of space in the entrance aperture of a spacecraft.
+One mission that applies this concept is the Arcus probe.
 
 \end{abstract}
 
-%% Keywords should appear after the \end{abstract} command. 
+%% Keywords should appear after the \end{abstract} command.
 %% The AAS Journals now uses Unified Astronomy Thesaurus concepts:
 %% https://astrothesaurus.org
 %% You will be asked to selected these concepts during the submission process
 %% but this old "keyword" functionality is maintained in case authors want
 %% to include these concepts in their preprints.
-\keywords{Classical Novae (251) --- Ultraviolet astronomy(1736) --- History of astronomy(1868) --- Interdisciplinary astronomy(804)}
+\keywords{Astronomical instrumentation (799) --- Spectrometers (1554) --- X-ray astronomy (1810)}
 
 %% From the front matter, we move on to the body of the paper.
 %% Sections are demarcated by \section and \subsection, respectively.
@@ -220,50 +204,81 @@ Editorial office will ask you to shorten it. This abstract has 182 words.
 %% We recommend that authors also use the natbib \citep
 %% and \citet commands to identify citations.  The citations are
 %% tied to the reference list via symbolic KEYs. The KEY corresponds
-%% to the KEY in the \bibitem in the reference list below. 
+%% to the KEY in the \bibitem in the reference list below.
 
 \section{Introduction} \label{sec:intro}
-X-ray spectroscopy can deliver many important insights into the astrophysics of the hot and energetic universe that are not otherwise observable. In particular, high-resolution spectroscopy (with resolving power $> 500$ or better) can resolve closely-spaced emission lines which offer diagnostics such as density and temperature, reveal the near-edge fine structure in absorption lines, or allow us to detect the precense of faint and narrow absorption lines caused by the warm-hot intergalactic medium in front of bright background quasars to give just a few examples. In the X-ray band, such high resolving powers can be achieved with either microcalorimaters or dispersive elements such as crystals or diffraction gratings. Microcalorimeters offer a fixed absolute energy resolution $\Delta E$, which gives them good resolving power $R=E/\Delta E$ at large energies $E$ and consequently microcalorimeter detectors are planned for the imaging cameras for several of the next X-ray observatories\cite{charm,athena,lynx papers for detectors). However, diffraction gratings have a distinct advantage for softer X-rays below about 2~keV.
+X-ray spectroscopy can deliver many insights into the astrophysics of the hot and energetic universe that are not otherwise observable. In particular, high-resolution spectroscopy (with resolving power $> 500$ or better) can resolve closely-spaced emission lines which offer diagnostics such as density and temperature, reveal the near-edge fine structure in absorption lines, or allow us to detect the presence of faint and narrow absorption lines caused by the warm-hot intergalactic medium in front of bright background quasars to give just a few examples. In the X-ray band, such high resolving powers can be achieved with either microcalorimaters or dispersive elements such as crystals or diffraction gratings. Microcalorimeters offer a fixed absolute energy resolution $\Delta E$, which gives them good resolving power $R=E/\Delta E$ at large energies $E$ and consequently a microcalorimeter has been launched on Astro-E/Hitomi/SXS \citep{2014SPIE.9144E..2AM} and XRISM/Resolve \citep{2018JATIS...4a1214K} and this technology is also considered for other large missions in development such as Athena \citep{2014SPIE.9144E..2LR} and Lynx \citep{2019JATIS...5b1017B}. \citet{2016Natur.535..117H} used the microcalorimeter data from Astro-E/Hitomi to measure the line-of-sight velocity dispersion of \ion{Fe}{26} in the Perseus cluster and found that the turbulent pressure is only a few percent of the thermodynamic pressure in that region. However, diffraction gratings have a distinct advantage for softer X-rays below about 2~keV.
 
-The two largest X-ray observatories in history both field diffraction gratings: The Reflection Grating Spectrometer (RGS) on XMM-Newton\cite{RGS} and both the High-Energy Transmission Grating Spectrograph (HETGS) and the Low-Energy Transmission Spectrograph (LETGS) on Chandra\cite{Carnizares2005,LETG}.
-**Are each of these called spectrograph or spectrometer?**
-Unlike microcalorimeters, diffraction gratings require an additional dispersive element (a transmission or a reflection grating) in the optical path of the instrument and dedicated detectors to capture the dispersed signal. One common layout for a diffraction spectrometer is the Rowlandtorus\cite{Beuermann:78}. In the plan defined bt the optical axis and the dispersion direction, the gratings are located at one side of a circle, the detectors on the other. This circle is commonly called the ``Rowland circle''. In three dimensions, the surface that defines the best grating positions, make up the surface of a torus, thus the name ``Rowland torus'' for this geometry (see Sect.~\ref{sect:onetorus} for a figure).
+The two largest X-ray observatories in history both field diffraction gratings: The Reflection Grating Spectrometer (RGS) on XMM-Newton \citep{2001A&A...365L...7D} and both the High-Energy Transmission Grating  \citep[HETG,][]{2005PASP..117.1144C} and the Low-Energy Transmission Grating \citep[LETG,][]{1997SPIE.3113..172P} on Chandra.
+Unlike microcalorimeters, diffraction gratings require an additional dispersive element (a transmission or a reflection grating) in the optical path of the instrument and dedicated detectors to capture the dispersed signal. One common layout for a diffraction spectrometer is the Rowlandtorus \citep{Beuermann:78}. In the plane defined by the optical axis and the dispersion direction, the gratings are located at one side of a circle, the detectors on the other. This circle is commonly called the ``Rowland circle''. In three dimensions, the surface that defines the best grating positions has the shape of a torus, thus the name ``Rowland torus'' for this geometry (see Sect.~\ref{sect:onetorus} for a figure).
 
-In this article, we present an optical layout for an instrument that stacks two or four different channels with distinct optical axes in such a way that each channel follows the Rowland torus prescription, yet at the same time all channels are imaged onto a common set of detectors. The general concept could be applied for a large range of focal lengths, grating constants, and other hardware properties. Thus, we discuss advantanges and challenges of this layout without constraint to any specific mission concept. However, we note that Arcus\cite{}, an X-ray spectroscopy mission selected for phase A study in a NASA midex (medium explorer) call in 2018 applied this layout. Specific details of the  Arcus performace, such as predicted effective area and resolving power are shown \citenum{}, but the general concept of a double tilted Rowland spectrograph with its advantages and drawbacks has not been discussed -- a void we attempt to fill with this article.
+In this article, we present an optical layout for an instrument that stacks two or four different channels with distinct optical axes in such a way that each channel follows the Rowland torus prescription, yet at the same time all channels are imaged onto a common set of detectors. The general concept could be applied for a large range of focal lengths, grating constants, and other hardware properties. Thus, we discuss advantages and challenges of this layout in general. However, we note that Arcus \citep{2023SPIE12678E..0ES}, an X-ray spectroscopy mission proposed for NASA midex (medium explorer) and probe calls, applies this layout. Specific details of the  Arcus performance, such as predicted effective area and resolving power are shown in \citet{2018SPIE10699E..6FG,2023SPIE12678E..1DG}, but the general concept of a double tilted Rowland spectrograph (DTRS) with its advantages and drawbacks has not been discussed -- a void we attempt to fill with this article.
 
-The layout of this article is as follows: First, we discuss the properties on the optical elements that are most influential for the design of a DTRS, namely mirror properties, gratings, and detectors in Sect.~\ref{sect:elements}. Then, the illustrate the optical layout, modifying the design of a traditional single-channel Rowland torus spectrograph to a DTRS. In section~\ref{sect:discussion}, we discuss advantages and disadvantages of our DTRS concept. We end with a short summart in section \ref{sect:summary}.
+The structure of this article is as follows: First, we discuss the properties on the optical elements that are most influential for the design of a DTRS, namely mirror properties, gratings, and detectors in Sect.~\ref{sect:elements}. Then, we illustrate the optical layout, modifying the design of a traditional single-channel Rowland torus spectrograph to a DTRS. In section~\ref{sect:discussion}, we discuss advantages and disadvantages of our DTRS concept in general and for the example of Arcus in particular (section~\ref{sect:applications}). We end with a short summary in section \ref{sect:summary}.
 
 \section{Elements of an X-ray grating spectrograph}
 \label{sect:elements}
+An X-ray spectrograph using the Rowland layout consists of a focussing mirror, diffractive gratings, and a detector.
 
 \subsection{Mirror characteristics and sub-aperturing}
+The concept of a DTRS can be implemented with different mirror technologies. The size of the collecting area is to first order proportional to the number of photons that the spectrograph can detect, and the spectral resolving power $\Delta \lambda / \lambda$ increases when the mirror point-spread-function (PSF) decreases. Depending on the type of mirror chosen, the PSF can be dominated by the alignment error between mirror shells, in particular for mirrors that consist of hundreds of elements. In this case, X-rays are offset from the focus point both in the plane of reflection and perpendicular to it.
+On the other hand, mirrors can also have a figure error, which is the deviation of the mirror surface from the ideal shape. If the PSF is dominated by the figure error or scattering by particulates on the mirror surface, then scatter in the plane of reflection is typically larger than the out-of-plane scatter. In this case, sub-aperturing of the aperture can improve the spectral resolving power. This is illustrated in Fig.~\ref{fig:subaperture}.
+
+
+\begin{figure*}
+\plotone{subaperture.pdf}
+\caption{
+    Illustration of the concept of sub-aperturing. All panels show a view from the universe looking down onto the telescope. \emph{left}: Each dot is a photon shown as it passes through a diffraction gratings. Photons are colored according to their polar angle in this panel. \emph{middle and right:} Photons detected in the zeroth and first diffraction order on the detector, respectively. The dispersion direction is from left to right ($y$ coordinate), the distance from the focal point at $(y, z) = (0, 0)$ is shown. Each photon is shown in the same color as in the left panel. Photons passing mirror and grating close to $z=0$ (dark purple) are spread out along the dispersion direction ($y$ coordinate); photons passing mirror and gratings close to $y=0$ are more concentrated along the dispersion direction. Sub-aperturing means that the mirror and gratings do not cover a full circle, but only regions marked in yellow and green in the left panel, so that the resulting photon distributions on the detector are narrower in dispersion direction. Sub-aperturing thus reduces the PSF in the dispersion direction, which increases the spectral resolving power.}
+\label{fig:subaperture}
+\end{figure*}
 
 \subsection{Dispersive elements}
-In prinicle works for any transmission grating, but makes most sense for CAT gratings, so discuss those
-
-trasmission vs diffraction gratings - Casey 2020
-
-Because X-ray can penetrate most material commonly used to manufacture gratings, X-ray instruments are designed to use the gratings either in transmission or, e.g.\ in the case of the RGS, at very small reflection angles close to the angle of total reflection. Thus, transmission and reflection gratings would be located at essentially the same position in the optical path.
+In a Rowland torus geometry, diffraction gratings are placed on the surface of the Rowland torus. They diffract light according to the grating equation for photons arriving perpendicular to the grating surface:
+\begin{equation}
+n \lambda = d \sin \theta \label{eqn:diffraction}
+\end{equation}
+where $\lambda$ is the wavelength of the light, $n$ is the order of the diffraction, $d$ is the grating constant, and $\theta$ is the angle between the incoming light and the normal to the grating. (The equation can be rewritten for rays hitting the grating at arbitrary angles, but for the purpose of this conceptual discussion that is not needed.)
+Typically, these transmission gratings are flat and only a few cm$^2$ in size; the spacing between gratings bars $d$ is the same for all gratings and does not vary within a grating. While a flat grating necessarily deviates from the curved surface of a torus, in today's instruments those deviations are small enough that they do not impact the resolving power of the spectrograph significantly. Larger gratings would increase the effective area of the instrument because less space is needed for frames and other mounting structures that hold the gratings in place, but they would also deviate more from the surface of the torus. \citet{2020SPIE11444E..88G} explored bending the gratings in one dimension or varying the distance between grating bars over a grating to compensate for the deviations from the ideal shape in simulations. However, these concepts have not been implemented in a hardware yet.
 
 
 \subsection{Detectors}
-The dispersed spectrum is spread out far in the dispersion direction. Thus, the ideal detector is much longer in one direction than in the other. Individual detector elements (e.g.\ CCDs) can be tiled, but to avoid chip gaps, it is beneficial to keep the number of elements low. In our DTRS design several spectral traces are positioned in parallel (section~\ref{sect:opticallayout), so the detector has to be position sensitive in 2D to separate individual channels.  Because ir covers a large area than in direct imaging observations, a detector with moderate cost and power requirements per surface area is well-suited for this design. The detector needs to be slightly curved to follow the Rowland torus. If it is made up of smaller individually flat elements, those elements can be arranged tangential to a circle.
+The dispersed spectrum is spread out far in the dispersion direction. Thus, the ideal detector is much longer in one direction than in the other. Individual detector elements (e.g.\ CCDs) can be tiled, but to avoid chip gaps where photons are lost and gaps appear in the extracted spectum, it is beneficial to keep the number of elements low. In our DTRS design several spectral traces are positioned in parallel (section~\ref{sect:opticallayout}), so the detector has to be position sensitive in 2D to separate individual channels.  Because it covers a larger area than in direct imaging observations, a detector with moderate cost and power requirements per surface area is well-suited for this design. The detector should follow the shape of the Rowland circle. This can be achieved by using curved detectors or by tiling smaller flat detector elements where each element is tangential to the Rowland circle.
 
-The dispersed spectrum contains fewer photons than direct imaging with the same collecting area and spreads this signal out over a large physical region. Thus, the counts rates are lower. Detectors that might by at risk of pile-up in direct observations can still be used for the dispersed signal. On the other hand, the larger regions needed to extract the signal means that background events (internal background and diffuse astrophysical emission) are more important than in direct imaging observations. Similarly, fast timing resolution is typically not needed, because the lower signal means that the detected photons need to be binned up into longer time bins for analysis than a direct imaging observation. Intrinsic energy resolution is required to both suppress the background by filtering out events that are incompatible with wavelengths of the dispersed signal at any particular location and to separate grating orders, where photons of different orders are diffracted to the same position (e.g.\ the sixth order for the O~{\sc vii} forbidden line of the He-like triplet at 2.21~nm and the seventh order of 1.94~mn photons, close to the O~{\sc viii} Lyman$\alpha$ line).
+The gratings spread out the signal over a large physical region on the detector. Thus, the counts rates per pixel are much lower than they would be in an imaging observation. Detectors that might be at risk of pile-up in direct observations can still be used for the dispersed signal. On the other hand, the larger regions needed to extract the signal imply that background events (internal background and diffuse astrophysical emission) are more important than in direct imaging observations. Similarly, fast timing resolution is typically not needed, because the lower signal means that the detected photons need to be binned up into longer time bins for analysis anyway. Intrinsic energy resolution is required to both suppress the background by filtering out events that are incompatible with wavelengths of the dispersed signal at any particular location and to separate grating orders, where photons of different orders are diffracted to the same position (e.g.\ the sixth order for the O~{\sc vii} forbidden line of the He-like triplet at 2.21~nm and the seventh order of 1.94~mn photons, close to the O~{\sc viii} Lyman$\alpha$ line end up at almost the same $\theta$ according to equation~\ref{eqn:diffraction}).
 
-In our DTRS design, the direct images of all channels are positioned on detectors to provide an accurate wavelength calibration, but also because the high-enery part of the spectrum, which is not efficiently dispersed by gratings can provide valuable context for the scientific interpretation of the high-resolution grating spectrum. Thus, the dector type chosen should also be able to handle direct imaging, albeit at a much lower count rate than in a direct imaging instrument without dispersive elements.
-
-**Ask Eric is he knows a paper to cite for comparison of detector types. Lynx?**
+In our DTRS design, the direct images of all channels are positioned on detectors to provide an accurate wavelength calibration, but also because the high-energy part of the spectrum, which is not efficiently dispersed by gratings, can provide valuable context for the scientific interpretation of the high-resolution grating spectrum. Thus, the detector type chosen should also be able to handle direct imaging, albeit at a lower count rate than in a direct imaging instrument without dispersive elements.
 
 \section{Optical Layout}
-In this section, we describe the optical layout for a DTRS. We start from the commonly used layout with a single spectrsocopy channel as it is employed in Chandra/LETGS or XMM/RGS. We then show how this design can be modified step-by-step and what considerations are important when chosing the specific parameters for a design. We illustrastrate the concept with ray-trace simulations. Those simulations are performed using a real ray-trace with the marxs code, but the dispersion angle (which is set by the energy of the photons and the grating constant of the grating) is chosen to be larger than feasible for a real instrument. This is done purely to separate the direct light (zero order) and the dispersed light (positive and negative orders) better in the images, so that the concept can be explained more clearly. Static images are embedded in the article, but we strongly encourage the reader explore the interactive 3D models embedded in the electronic version of the publication (might require Acrobat reader).
+\label{sect:opticallayout}
+In this section, we describe the optical layout for a DTRS. We start from a single central Rowland torus as in Chandra/HETGS and Chandra/LETGS. We then show how this design can be modified step-by-step and what considerations are important when choosing the specific parameters for a design. We illustrate the concept with ray-trace simulations. Those simulations are performed with the marxs code \citep{2017AJ....154..243G}. However, the setup is chosen to illustrate the concept of a DTRS, not to represent any particular instrument. For example, the position of the diffractive gratings shown leaves valuable mirror area uncovered and is done without considering the size and location of support structures that the gratings can be mounted on. The grating constant $d$ is chosen to be smaller than feasible for a real instrument. Static images of the 3D ray-traces are embedded in the article, but we encourage the reader explore the interactive 3D models embedded in the electronic version of the publication.
 
-f, d, sketches
+The points $\vec p$ on the surface of a torus can be parameterized by two angles $\varphi$ and $\theta$.
+\begin{equation}
+\vec p(\varphi, \theta) = \vec c + R \; \vec e_R(\varphi) + r \; (\vec e_y \sin \theta + \vec e_R(\varphi) \cos \theta)
+\end{equation}
+where $\vec c$ points to the center of the torus. The axis of symmetry is given by a unit vector $\vec e_y$. We define a vector $\vec e_R(\varphi) = \vec e_x \cos\varphi + \vec e_z \sin\varphi$. $R \vec e_R$ points from the center of the torus to the center of a circle with radius $r$. Sweeping that circle around the symmetry axis forms the torus. If $r < R$, the torus has an inner hole like a doughnut, and if $r > R$ the inner parts of the torus overlap with each other (``spindle torus'').
+
+Figure~\ref{fig:sketch} shows sketches of the geometry in the plane spanned by the optical axis and the symmetry axis of the torus. Details will be discussed in the following sub-sections.
+
+\begin{figure*}
+    \plotone{sketch}
+    \caption{\emph{left:} Sketch of the on-axis Rowland geometry in the plane of the optical axis and the symmetry axis of te torus. Photons arrive from the left. The location of the mirror is shown as blue box. The optical axis (solid blue line) passed through the center of the Rowland circle (blue square) and is perpendicular to the symmetry axis of the torus (blue long-dashed line). The two blue circles show the cut through the 3D torus in this plane; they are connected by blue dotted lines to help visualize the 3D position of the torus.
+    \emph{center:} Tilted Rowland torus. The optical axis of the blue channel is offset from the center of the Rowland circle, but intersects the symmetry axis of the torus in the focal point $F$. $\alpha$ is the angle between the optical axis and the line from the point where the optical axis intersects the Rowland torus to the center of the Rowland circle. $\beta$ is the angle from optical axis to the line connecting that intersection to the ``hinge'', the other point where symmetry axis of the torus and the Rowland circle intersect in this plane.
+    \emph{right:} Layout with two Rowland tori, tilted in opposite direction. In the plane spanned by both optical axes (which are parallel) and the symmetry axis of the torus, the two tori overlap in exactly one circle, the Rowland circle.
+        }
+    \label{fig:sketch}
+\end{figure*}
+
 
 \subsection{One Rowland Torus with central optical axis}
 \label{sect:onetorus}
-chip gaps chandra, dither
-
+For a single Rowland torus with no tilt, the optical axis passes through the center of the Rowland circle and $r=R$ as shown in the left panel of figure~\ref{fig:sketch}. Figure~\ref{fig:3d:single} shows a 3D view of a ray-trace. Since the diffraction gratings are symmetric with respect to the optical axis, positive or negative diffraction orders (up or down in figure~\ref{fig:sketch}) are equally likely, and the diffracted photons will be symmetric with respect to the focal point. To avoid the same wavelength to fall in a chip gap on the detector for both the positive and the negative diffraction orders, it is useful to position the CCDs with an offset, so that the chip gaps are not symmetric.
+\begin{figure}
+    \plotone{ifigs/single}
+    \caption{3D image of the ray-trace for a source with a continuum spectrum over a limited bandpass. Rays are shown from the entrace aperture on (circle on the right). They pass a focussing mirror represented by a green box and get diffracted by gratings (white squares). They are detected by CCDs (yellow). Rays are colored by the diffraction order: Light purple (middle) are zero order photons. A section of the Rowland torus is shown as transparent gray. The big square at the left indicates the position of the focal plane. Rays are traced past the detectors to the focal plane to show how the CCDs on the Rowland circle capture the rays when the dispersion width is smallest - past the CCDs the rays widen in dispersion direction again, but still become narrower in cross-dispersion direction. This figure is interactive in the online version, allowing the reader to pan, zoom, and rotate to see those details and inspect the rays from all angles. (Use the mouse to rotate, ``ctrl'' and mouse to pan, mouse wheel to zoom, and double-click to set the center of rotation. On other devices, other native controls might be available, e.g.\ two-finger touch to zoom on touchscreens.)
+        }
+    \label{fig:3d:single}
+\end{figure}
 %\begin{figure}
 %  \begin{interactive}{js}{file_wth_arll_components.tar/zip}
 %  figure call (e.g.\plotone, \includegraphics, etc.)
@@ -273,58 +288,148 @@ chip gaps chandra, dither
 
 \subsection{One tilted Rowland Torus}
 
+%alpha, beta, equations. notation different from Ralf.
 
-This torus is tilted Ralfs tild paper
-\cite{doi:10.1117/12.856482}
+\begin{figure*}
+    \plotone{ondetector}
+    \caption{Distribution of photons on the detectors for different designs. Photons are colored by channel and the position of the zero(s) order(s) is highlighted with red boxes. Note that the dispersion and cross-dispersion directions are not to scale.
+        }
+    \label{fig:fish}
+\end{figure*}
+
+\citet{doi:10.1117/12.856482} suggested tilting the torus with respect to the optical axis when using CAT gratings.
+This tilt can be described by two angles $\alpha$ and $\beta$ as shown in the middle panel of figure~\ref{fig:sketch}. $\alpha$ is the angle between the optical axis and the line from the point where the optical axis intersects the Rowland torus (labelled ``A'' in the figure) and the focal point of the mirror (``F''). We call the distance between those two points $a$, which is chosen to be slightly shorter than the focal length $f$ of the mirror to allow for space to mount the gratings behind the mirror.
+In this configuration, the torus has $R < r$ there are two points where the torus overlaps itself in the plane spanned by the optical axis and the symmetry axis of the torus (the plane shown in figure~\ref{fig:sketch}). The first of those intersection points is F. We call the second point ``Hinge''.
+$\beta$ is the angle from optical axis to the line connecting A and the Hinge. With that we can derive the radius of the Rowland circle to
+$$r = \frac{a}{2}\cos \alpha.$$
+ If the focal point F is the origin of the coordinate system, then the center of the Rowland circle (blue squares in left blue circles in the panels in figure~\ref{fig:sketch}) is at location
+ \begin{equation}
+    \begin{pmatrix} x \\ y \\ z \end{pmatrix} =
+    \begin{pmatrix} 0 \\ \frac{a}{2} \\  \frac{a}{2}\tan\alpha \end{pmatrix}.
+ \end{equation}
+
+Since A, F, and the Hinge are by definition all on the Rowland circle, their distance to this point is $r$. With this symmetry, we can obtain the angle of the axis of the torus with respect to the case where the axis of the torus is perpendicular to the optical axis (left panel of figure~\ref{fig:sketch}). This angle is $\beta-\alpha$. With that, we can derive $R$, the distance between the center of the Rowland circle and the center of the torus, to
+\begin{equation}
+    R = r \sin\left(\frac{\pi}{2} - \beta\right),
+\end{equation}
+which places the center of the torus at
+\begin{equation}
+    \begin{pmatrix} x \\ y \\ z \end{pmatrix} =
+    \begin{pmatrix} 0 \\ \frac{a}{2}-R\cos{\beta-\alpha} \\ \frac{a}{2}\tan{\alpha}+R\sin{\beta-\alpha} \end{pmatrix}.
+\end{equation}
+
+CAT gratings are blazed and thus deviate more from the Rowland-torus than a grating that is placed perpendicular to the incoming rays. Figure~\ref{fig:3d:tilted} shows this layout in 3D, but with a very large blaze angle for clearity; for real CAT gratings typical blaze angles are 1-2~deg. Tilting the Rowland torus by about twice the blaze angle reduces this effect. Also, CAT gratings disperse predominantly in one direction. However, the Rowland geometry optimizes the spectral resolving power by minimizing the spread of the photons in cross-dispersion direction; detectors are located on the Rowland circle, which represents the position of minimal spread in dispersion direction. This is not the same location as the imaging focal plane, which is defined by minimizing the total size of the PSF. At the focal point, the Rowland circle and the imaging focal plane match. Figure~\ref{fig:fish} shows how the dispersed photons spread out in cross-dispersion direction, roughly resembling the outline of a fish. With a tilted Rowland torus, there is a second intersection point between the spectral and the imaging focus where the cross-dispersion width becomes small (the point between the body and the tail of the fish, about +300 in dispersion direction in the second panel of figure~\ref{fig:fish}). This location can be chosen to be roughly in the center of the dispersed spectrum and thus limit the cross-dispersion profile to reduce the area of the detector that contributes to the extracted signal and thus the background. We note that the width in cross-dispersion direction is much larger for larger diffraction angles and, in real instruments, will be smaller than shown in the figure.
+
+\begin{figure}
+    \plotone{ifigs/tilted}
+    \caption{Ray-trace like figure~\ref{fig:3d:single}, but for a tilted Rowland torus setup. See figure~\ref{fig:3d:single} for an explanation of the elements shown in the image and the interactivity in the online version.
+        }
+    \label{fig:3d:tilted}
+\end{figure}
+
+A tilted Rowland can also be combined with sub-aperturing to increase the spectral resolving power as discussed in figure~\ref{fig:subaperture}. In this case, not all of the fish shape is filled with photons. This can be seen by comparing the dark purple points in the second, third, and forth panel in figure~\ref{fig:fish}. The Rowland torus for this channel has the same tilt and dimensions in all three designs, but in the second panel, the mirror fills the full circle, in the third panel it has just two wedges, and in the forth panel just one. In either case, the spectral extraction region used in data analysis should take this shape into account to minimize detector background.
 
 \subsection{Double tilted Rowland Torus}
-For R > r signal dips below plane, fish form, two points, symmetry
+\begin{figure}
+    \plotone{ifigs/tilted_double}
+    \caption{Ray-trace like figure~\ref{fig:3d:tilted}, but with channels split on two separately tilted Rowland tori. See figure~\ref{fig:3d:single} for an explanation of the elements shown in the image and the interactivity in the online version.
+        }
+    \label{fig:3d:tilted_double}
+\end{figure}
 
-two opticla axes,
-offset chip gaps
-spectroscopic vs imganing focus unless I;ve said that above.
-
+Sub-aperturing reduces the geometric area of the mirror and thus the effective area of the instrument. This can be compensated by adding a second channel, with mirrors mounted next to the mirrors of the first channel. Again, gratings and detectors for this second channel need to be positioned on a Rowland torus, however the two Rowland tori for the two channels need not be identical. When $R> r$ the Rowland circle intersects the focal plane twice. We choose those two points as the focal points for the two channels of the instrument; this layout is symmetric with respect to the center of the Rowland circle (figure~\ref{fig:sketch}, right). By selecting $\alpha$ close to the average dispersion angle of dispersed photons, we can reach a configuration where the same detectors that detect the zeroth order of one channel, will now also detect the dispersed photons of the other channel and vice versa. The second channel also adds redundancy in case of detector failure, and can compensate for chip gaps if the position of the detector elements on one channels is moved along the Rowland circle a little bit with respect to the other channel. Figure~\ref{fig:3d:tilted_double} shows a ray-trace for this configuration.
 
 \subsection{Channel offsets}
-
+The next two subsections explain how the channels can be offset in both dispersion and cross-dispersion direction to reduce alignment requirements and mitigate chip gaps. Figure~\ref{fig:3d:tilted_double_offset} shows a 3D ray-trace image in this configuration; the resulting signal on the detector is shown in figure~\ref{fig:fish} (bottom panel).
+\begin{figure}
+    \plotone{ifigs/tilted_double_offset}
+    \caption{Ray-trace like figure~\ref{fig:3d:tilted_double}, but with offsets in dispersion and cross-dispersion direction. See figure~\ref{fig:3d:single} for an explanation of the elements shown in the image and the interactivity in the online version.
+        }
+    \label{fig:3d:tilted_double_offset}
+\end{figure}
 \subsubsection{Channel offsets in the cross-dispersion direction}
+In the data reduction, we need to assign a unique wavelength to each dispersed photon. To do that, it is necessary to know which optical channel a photon passed through and thus the setup needs to avoid overlapping photons from both channels on the same location of the detector. This can be accomplished by shifting the Rowland tori (and mirrors and gratings positioned on them) in the cross-dispersion direction (into or out of the plane of the plot in figure~\ref{fig:sketch}). The shift should be large enough to clearly separate the two channels, but keep both dispersed spectral traces on the detector with margin (figure~\ref{fig:fish}). Since this shift is perpendicular to the Rowland circle, it does not impact the spectral resolving power.
+
+While it is possible to have a mirror that spans the entire circle for each of the two channels, the DTRS layout is particularly well-suited for sub-aperturing. In this case, each channel will have two opposing wedges filled with mirror elements and gratings leading to a total of four mirror and grating wedges. These can then be arranged closely together (see figure~\ref{fig:3d:tilted_double}) to maximize the area used given the size constraints of the spacecraft. In this case, it is an option to split each of the two channels into two sub-channels with their own separate offset, such that there are two parallel traces running in each direction (Figure~\ref{fig:3d:tilted_double_offset}) for a total of four traces (figure~\ref{fig:fish}, right panel). Without this split, the opposing mirror and grating wedges have to be carefully aligned to the same optical axis, any misalignment between them would broaden the PSF and thus reduce the spectral resolving power. With this split, each wedge defines its own optical axis and the exact location and thus the wavelength scale for each zeroth order can be determined from observations.
 
 \subsubsection{Channel offsets in the dispersion direction}
-
+When each channel is split into two sub-channels as described above and each of the sub-channels has its own Rowland torus (not shown in the figures because four overlapping tori are hard to visually separate), the two sub-channels can also be offset in the dispersion direction. This causes the Rowland torus that defines the grating positions to deviate from the torus that sets the position of the detectors, but if the offset is small, the impact on the spectral resolving power is negligible. A benefit of such an offset in dispersion direction is that the dispersed spectra of the two sub-channels do not hit chip gaps at the same wavelength, spreading out the effect of chip gaps on the extracted spectrum without the need to dither the spacecraft.
 
 
 \section{Discussion}
+\label{sect:discussion}
 
 \subsection{Subaperturing space considerations, and resolving power}
-lower mirror requirements, thus chepaer cost for same resolving power, but can use wdge only, stack channels to get square aperture and get back effective area
+Manufacturing mirrors with a smaller PSF is more difficult and costly than manufacturing mirrors with a larger PSF, but otherwise identical properties. For a spectrograph, the width of the PSF in dispersion direction is far more important than the width in cross-dispersion direction. If the width in dispersion direction can be reduced by sub-aperturing, that provides a higher spectral resolving power at lower cost and technical complexity compared to reducing the PSF of the mirror itself. On the other hand, it reduces the collecting area of the mirror, since only a fraction of the full circle can be used. The DTRS design allows us to compensate that by having multiple channels, ultimately delivering better resolving power at the same mirror requirements than a single-channel design.
 
-\subsection{Number of CCDs}
-2 camerase, different directions. Need to get zeroth orders anyway (high-energy, wavelength scale), but more CCDs than just one directions (Lynx), make good use of rea-estate
+The independent mirror wedges in a DTRS design can be arranged on the front-end of the spacecraft such that they take up a similar geometric area as a mirror filling the full circle in a single channel design.
+
+\subsection{Zeroth order is seen}
+Observing the direct image of all channels on the detector has several advantages. First, most of the high-energy photons are not diffracted by typical CAT gratings. So, the direct image can be used for analysis of high-energy spectrum using the intrinsic energy resolution of the detector, e.g.\ a CCD or even microcalorimeter. For example, the Fe line at 6.7~keV is a widely used diagnostic for many astrophysical objects. Second, accurate knowledge of the position of the direct image is important for the wavelength calibration of the dispersed signal. The wavelength of the light is determined by measuring the distance $x$ from the detected photon to the zeroth order and the known distance $a$ between the gratings and the focal plane. Conceptually, $\tan \theta = x/a$. With the known grating constant $d$, equation~\ref{eqn:diffraction} then yields $\lambda$. For high spectral resolving power and large values of $\theta$ it might be important to take the 3d shape of the detector into account, but either way, accurate knowledge of the zero order position is crucial.
+
+\subsection{Number of detector elements}
+An instrument that uses only a single tilted Rowland torus needs to cover a long strip of dispersed light with a detector and a small area around the zeroth order. On the other hand, a DTRS needs two long detector strips to cover the dispersed signal on both sides; those cameras will cover the zeroth order of all channels at the same time.
 
 \subsection{Robustness}
-relaxes alignment because multiple channels (thus lower cost and technical risk), resilience because independent channels on different CCDS (see XMM loss of RGS chip), check for systemics in calibration because independent channels, chip gaps
+The DTRS concept increases the robustness and reduces the technical risk of a mission in several ways. Because we can assign each sub-apertured mirror wedge its own channel (in the 4 channel design with offsets), there is no need to align the mirror for each channel to each other to better than the cm scale.
+Also, the design is robust against loosing individual detectors in a camera. Since half of the photons are dispersed from left-to-right and the others right-to-left, loss of a detector element in a camera does not result in a complete loss of spectral coverage for any wavelength. The multichannel design can also help to uncover systematics in the calibration.
 
-wavelength self-calibration (does not need DTRS, but works there, too). is order sorting and several orders ad one energy
 
-\subsection{Other advantages}
+%wavelength self-calibration (does not need DTRS, but works there, too). is order sorting and several orders ad one energy
 
-Zero order seen, for direct observation (hard X-rays) and calibration
 
 \subsection{Drawbacks}
-increased background due ot larger CCD region, less source-free region for background.instrum analysis, coplexity of analysis (numberof spectra!), sprectra coupled (cross-dispersion, read-out streaks for traditional CCDs, wings and energy resolution), does not work for crowded fields, fields with extended emission (galactic center)
+Because the DTRS concept spreads the dispersed photons over a larger detector area than a single-channel design, the background contamination in the spectra is higher, simply because more pixels contribute to the extracted science spectrum. This does not matter for bright isolated point-source, but makes observations of faint sources, where the dispersed spectrum has count rates comparable to the background, difficult. Similarly, observations where there is extended emission in the field-of-view, for example in the galactic center, are difficult. The DTRS concept is also not well-suited for crowded fields, where the dispersed signal of one source overlaps with the dispersed signal of another source.
+
+Depending on the detector technology chosen, the DTRS concept might also lead to undesirable coupling between the spectra of different channels. For example, traditional CCDs have a read-out streak, where photons that arrive at the detector during the charge transfer are not associated with the correct position on the detector in the direction of the read-out. This means that photons that should be recorded at the zero-order position or at the position of a strong emission line in one channel are assigned to the wrong channel, where they might cause what looks light a weak emission feature. This cross-talk can be avoided by using different detector technologies, or be taken into account in the data analysis. Similarly, the pure number of channels with different chip gaps and detector positions increases the computational complexity of the data analysis compared to a single-channel design. Development of dedicated software tools is needed to help with the analysis of these multichannel data.
+
 
 
 \subsection{Similar concepts}
 
-The Far Ultraviolett Spectroscopic Explorer (FUSE) \cite{2000ApJ...538L...1M} faced a design challenge similar to what we discuss here for X-ray instruments. FUSE also has four spectroscopic channels with gratings arranged in a Rowland geometry. Unlike in X-rays, UV gratings can operate in reflection close to normal incidence. The reflection gratings are thus positioned perpendicular to the path of the rays, which means that are almost tangential to the surface of the Rowland torus. Thus, a small number of gratings (just one per channel in the extreme case) is sufficient and, even if the grating itself is flat, it never deviates much from the surface of the Rowland torus. Since UV light has a longer wavelength, it can be dispersed to larger angles increasing the spectral resolving power. In FUSE, detectors just cover the dispersed signal, and not the direct beam (zeroth order) and detectors for the different channels are independent of each other.
+The Far Ultraviolett Spectroscopic Explorer (FUSE) \citep{2000ApJ...538L...1M} faced a design challenge similar to what we discuss here for X-ray instruments. FUSE also has four spectroscopic channels with gratings arranged in a Rowland geometry. Unlike in X-rays, UV gratings can operate in reflection close to normal incidence. The reflection gratings are thus positioned almost perpendicular to the path of the rays tangential to the surface of the Rowland torus. Thus, a few gratings (just one per channel in the extreme case) is sufficient and, even if the grating itself is flat, it never deviates much from the surface of the Rowland torus. Since UV light has a longer wavelength, it can be dispersed to larger angles increasing the spectral resolving power. In FUSE, detectors just cover the dispersed signal, and not the direct beam (zeroth order) and detectors for the different channels are independent of each other.
 
-Our design of a DTRS places the direct beam for all channels on a detector. This way, the position of the pointing can be constantly monitored and determined from the observed data. If the pointing position drifts and the optical channels are not fully aligned, this can be seen in the science data. In contrast, FUSE has performed observations where the target was not in the field-of-view of all channels, but the amount of the exposure time lost is unclear \cite{2000ApJ...538L...1M}.
+Our design of a DTRS places the direct beam for all channels on a detector. This way, the position of the pointing can be constantly monitored and determined from the observed data. If the pointing position drifts and the optical channels are not fully aligned, this can be seen in the science data. In contrast, FUSE has performed observations where the target was not in the field-of-view of all channels, but the amount of the exposure time lost is unclear \citep{2000ApJ...538L...1M}.
+
+\section{Applications}
+\label{sect:applications}
+In the previous sections, we discussed the concept of a DTRS in general. The Arcus X-ray spectrograph \citep{2023SPIE12678E..0ES} adopts this concept with $\alpha=3.6$~deg and $\beta=2\alpha$. Arcus has gone through multiple design iterations for different mission calls and the design will continue to be refined. As an example, we describe the Arcus setup here as submitted to the NASA probe call in 2023. Arcus uses silicon-pore optics (SPO) with a 12~m focal length that are developed for the Athena mission \citep{2023SPIE12679E..05G}; $a$ is slightly smaller than the focal length with $a=11876$~mm. SPOs are manufactured as small stacks of about 30 mirror plates with sizes of order 10-20~cm in each direction (the exact size depends on the radius). 40 SPOs are aligned into one petal and each petal defines one of four optical channels in a DTRS design with offsets. The two sub-channels are offset by $\pm2.5$~mm in dispersion direction with respect to the design with just two Rowland tori. In cross-dispersion the four channels are located at $-7.5$, $-2.5$, $+2.5$, and $+7.5$~mm from the center of the CCDs.
+Critical-angle transmission (CAT) gratings are manufactured through deep reactive-ion etching of silicon-on-insulator wafers \citep{2021SPIE11822E..15H,2023SPIE12679E..0LH}. These gratings are mounted with a blaze angle, i.e.\ they are intentionally tilted by 1.8~deg with respect to the incoming photons, which concentrates the diffracted photons around the ``blaze peak'' at a diffraction angle of $2 * 1.8 = 3.6$~deg, so that only 8~CCDs are needed in each camera covering about 30~cm in the dispersion direction with a gap close to 50~cm between the two cameras. Arcus will achieve a spectral resolving power around 3500 for wavelength between 1.5 and 6.0~nm, averaged over all diffraction orders, and an effective area up to 500~cm$^2$ between 1.5 and 2.5~nm, dropping to 100~cm$^2$ at 6.0~nm. Detailed ray-tracing simulations for Arcus that optimize the parameters of the design and predict the performance depending on the misalignment for the different components are shown in \citet{2017SPIE10397E..0PG,2018SPIE10699E..6FG,2023SPIE12678E..1DG}.
+
+
+\begin{figure*}
+    \plotone{EQFullDet}
+    \caption{Simulation of an Arcus observation of an emission lines spectrum (see section~\ref{sect:applications} for details). Position of the CCDs are outlined with a white frame and the zeros orders are indicated. Dashed arrows mark the dispersion direction of the four orders from the zeroths order. Only photons that are detected on a CCD are included. Note that the dispersion and cross-dispersion directions are scaled differently.
+        }
+    \label{fig:Arcusfull}
+\end{figure*}
+
+Figure~\ref{fig:Arcusfull} shows a simulation of an Arcus observation of an emission line spectrum. The spectral model is taken from the active star EQ~Peg~A \citep{2008A&A...491..859L} and the simulation is run for an exposure time of 100~ks. Note that the plot shows an extremely distorted view of the CCD plane. The $x$-axis extends over 1.2 m, while the $y$-axis covers only 2.5 cm.
+
+This particular simulation does not include any background. The photons that are seen in between the spectra are cross-dispersed photons. The CAT gratings disperse photons in one direction. However, the main CAT grating bars are held in place by a support structure (L1) that also acts as a grating and disperses some photons perpendicular to the main dispersion direction. This is visible in the plot for the zeroth orders and the strongest emission lines.
+
+
+\begin{figure*}
+    \plotone{EQAllDet}
+    \caption{Images of the 16 individual Arcus CCDs are shown for the same simulation as in figure~\ref{fig:Arcusfull}. Note that the color scale is chosen differently for each chip.
+        }
+    \label{fig:Arcusall}
+\end{figure*}
+
+Figure~\ref{fig:Arcusall} shows the same simulation, but with each CCD to scale. The color scale is different for each CCD though, to bring out details on CCDs that do not contain the bright zeroths orders or extremely bright emission lines.
+
+
+
+
+%Each spectral trace is slightly curved. This is the result of astigmatism coupled with sub-aperturing. If each channel had a full 360 degree mirror, we would see an hour-glass shape that is narrowest at the position of the zeroth order and then widens as the spectral focus diverges from the imaging focus. In Arcus' design with a tilted torus, there is a second point where the spectral focus coincides with the imaging focus and thus the spectral trace would become narrower in cross-dispersion direction again. However, the SPOs for each channel cover only a very small fraction of the full circle, and thus the spectral trace fills only one "edge" of the hourglass shape, which results in the curved image. The dispersion direction is exactly parallel to the $x$ axis at all locations, but the $y$ extend of the extraction region can be chosen to follow the curve to reduce the number of background events in the spatial extraction region.
+
+
 
 \section{Summary}
+\label{sect:summary}
+\emph{Chandra}/HETGS and LETGS employ an on-axis Rowland torus geometry. We show how this geometry can be modified in several steps to increase the spectral resolving power without compromising the effective area for a specific class of future X-ray observatories. Our design is optimized for grating spectroscopy of X-ray point sources. We use sub-aperturing to increase the spectral resolving power. We tilt the Rowland torus such that the optical axis of the mirror is offset from the center of the Rowland circle. That reduces the deviation of flat gratings from the surface of the torus and also allows us to position a second channel next to the first one, doubling the effective area compared to a single, sub-apertured channel. Both channels have different Rowland tori (dobule tilted Rowland spectrograph, DTRS), but they overlap in the Rowland circle, and thus both channels can be imaged onto the same set of detectors. In this geometry, all zeroths orders are visible for wavelength calibration and to detect hard X-rays in direct imaging. Finally, we discuss how small offsets between the channels can mitigate chip gaps and reduce the alignment requirements between optical elements during the assembly of the instrument. We illustrate these concepts with sketches and ray-traces designed to illustrate the concept.
 
-A specialized layout for a mission with point source spectroscopy goal, not a general observatory design
-
-Arcus (need ot bring is up finally - or have a section on "Application" obove?)
+We briefly discuss Arcus, one NASA probe class mission concept that implements a DTRS and show realistic ray-traces for a 100~ks observation of an emission line dominated spectrum with Arcus.
 
 
 \begin{acknowledgements}
@@ -334,7 +439,7 @@ which is operated by SAO for and on behalf of NASA under contract NAS8-03060.
 
 \end{acknowledgements}
 
-\software{marxs\cite{}, AstroPy \citep{2013A&A...558A..33A,2018AJ....156..123A}, NumPy \citep{van2011numpy,harris2020array}, Matplotlib \citep{Hunter:2007},IPython\cite{IPython}}
+\software{marxs \citep{2017AJ....154..243G}, AstroPy \citep{2013A&A...558A..33A,2018AJ....156..123A}, NumPy \citep{harris2020array}, Matplotlib \citep{Hunter:2007}, IPython\cite{IPython}}
 
 \bibliography{bib}{}
 \bibliographystyle{aasjournal}
