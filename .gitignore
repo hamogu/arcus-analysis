@@ -1,5 +1,6 @@
 # Editor Backups
 *~
+*.bak
 # Python / IPython
 *pyc
 *.ipynb_checkpoints*
@@ -14,4 +15,10 @@ nb_proc/
 *.log
 *.out
 *.synctex.gz
+*.bbl
+*.blg
+
 papers/Doubletiltconcept/doubletiltconcept.pdf
+
+# Data files
+inputdata/
