@@ -1,0 +1,5 @@
+Additionally, we discovered a typo in our description of Fig2:
+In the figure caption, we report the locations of the zeroth order at -380 mm
+and the bands we discuss at +350 mm. In both cases the sign is reversed.
+In an older version, we had chosen to plot a different spectral trace,
+which run left-to-right instead of right-to-left.

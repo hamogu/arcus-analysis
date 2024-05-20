@@ -1,0 +1,321 @@
+\documentclass[12pt]{spieman}  % 12pt font required by SPIE;
+%\documentclass[a4paper,12pt]{spieman}  % use this instead for A4 paper
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{tocloft}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage[table]{xcolor}
+\include{moritz}
+
+
+\usepackage{lineno}
+\linenumbers
+
+\title{Order sorting and background handling for Arcus}
+
+
+\author[a]{Hans Moritz G\"unther$^*$}
+%\author[b]{Peter Cheimets}
+%\author[c]{Casey T. DeRoo}
+\author[a]{David Huenemoerder}
+%\author[a,d]{Ralf K. Heilmann}
+\author[a]{Eric D. Miller}
+%\author[e]{Andrew Ptak}
+%\author[b]{Randall K. Smith}
+
+
+\affil[a]{MIT Kavli Institute for Astrophysics and Space Research, Cambridge, MA 02139, USA}
+%\affil[b]{Center for Astrophysics, Harvard-Smithsonian Astrophysical Observatory, Cambridge, MA 02138, USA}
+%\affil[c]{Dept. of Physics \& Astronomy, University of Iowa, Iowa City, IA 52242, USA}
+%\affil[d]{Space Nanotechnology Laboratory, MIT Kavli Institute for Astrophysics and Space Research, Cambridge, MA 02139, USA}
+%\affil[e]{NASA Goddard Space Flight Center, Greenbelt, MD 20771, USA}
+
+
+\renewcommand{\cftdotsep}{\cftnodots}
+\cftpagenumbersoff{figure}
+\cftpagenumbersoff{table}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The Arcus X-ray spectrograph (XRS) will deliver high-resolution spectra in four telescope/grating modules (called ``channels'') imaged onto the same set of detectors. We examine two effects (cross-dispersion from support structures in the diffraction gratings and frame-transfer) that can lead to a photon being assigned to the different channel in the data reduction. Even within a channel, photons can be assigned the wrong diffraction order because orders are closely spaced in energy. Based on simulations, we show that both effects are small in the XRS and can be dealt with in data analysis and fitting using existing data formats and algorithms. Finally, we describe a process to construct per-order background spectra for XRS simulations.
+\end{abstract}
+
+% Include a list of up to six keywords after the abstract
+\keywords{Arcus, ray-tracing, X-ray, background, data analysis}
+
+% Include email contact information for corresponding author
+{\noindent \footnotesize\textbf{*}Hans Moritz G\"unther,  \linkable{hgunther@mit.edu} }
+
+% FOR SUBMISSION
+\begin{spacing}{2}   % use double spacing for rest of manuscript
+
+% For my own while writing. It's just easier to read this way
+%\begin{spacing}{1}
+
+\section{Introduction}
+\label{sect:intro}  % \label{} allows reference to this section
+In the eye of the public, astrophysics is probably most famous for the beautiful pictures of planetary disks, star forming regions, and galaxies in the deep fields. However, in many cases, spectra are required to derive physical parameters such as densities, temperatures, gravitational redshift, or photon ionization fields. Arcus is a Probe class mission concept that combines two instruments, the X-ray spectrometer (XRS) and the UV spectrometer (UVS), to provide high-resolution spectra over the X-ray and UV band. This article describes certain aspects of the XRS data analysis and background handling. The XRS works in the 20-50~\AA{} band and delivers spectra with a resolving power around 3500 \textbf{Reference to Guenther et al. paper ``Arcus X-rat telescope performance predictions ...'' in the same JATIS issue here.}
+
+
+Arcus addresses three major science themes but will also address a wide range of other questions in astrophysics through observations proposed by the community. Among the major science themes is detecting the missing baryons in the warm-hot intergalactic medium. Observationally, Arcus will address this by observing many sight lines to strong, bright background objects such as quasars. Those sources emit an X-ray continuum spectrum and if the line of sight passes through clouds of hot, ionized gas, Arcus will see weak absorption lines of O~{\sc vii} and other highly ionized ions superimposed on that continuum. In same cases, a sightline may contain several absorbing clouds at different redshifts\cite{10.1117/12.2231193} and the spectrum will thus have weak absorption lines that are hard to find within the noise of a continuum when the number and location of those lines is unknown a priori.
+
+Other major themes for Arcus are studies of stellar coronae and stellar accretion. For those targets, Arcus XRS will easily resolve the emission lines. For example, in young stars that are still surrounded by an accretion disk, the co-called classical T Tauri stars (CTTS), gas is ionized by the stellar radiation at the inner edge of the disk and then falls in towards  the star following the magnetic field lines. The plasma is accelerated to free-fall velocities around 500~km~s$^{-1}$ and passes through a strong shock on the stellar surface. In the shock, material is heated up to X-ray emitting temperatures, and the Arcus XRS will observe emission lines from ions such as O~{\sc vii}, O~{\sc viii}, Ne~{\sc ix}, and Ne~{\sc x}\cite{2022hxga.book...57S}. Those lines may be shifted by a few hundred km~s$^{-1}$ and will be kinematically resolved, but in general identifying the strong emission lines will be relatively easy. Those two scenarios, bright, known emission lines and weak absorption lines at unknown position represent two extremes in the range of spectral fitting. If both can be successfully addressed, spectral modelling for any other scenario can also be done.
+
+In this article, we analyze certain aspects of the data analysis for Arcus X-ray spectra.
+We first summarize the design of the XRS in sect.~\ref{sect:layout}. Arcus consists of four independent telescope/grating modules (which we call ``channels'' from now on) that are imaged onto a single focal plane.
+Given the layout of the XRS, spectral extraction might seem daunting at first, due to cross-talk between different channels (section~\ref{sect:crosstalk}) and contamination by neighboring orders (section~\ref{sect:ordersorting}).
+
+We show in section~\ref{sect:dataanalysis} that established techniques and data formats used for the spectra from grating spectroscopy in Chandra and XMM-Newton are already sufficient to achieve Arcus science goals though further improvements in data analysis are possible. We also look at the particle background in the detector (section~\ref{sect:nxb}).
+
+The discussion here is based on ray-traces with the ray-tracing code MARXS\cite{2017AJ....154..243G,marxs2.0}, a Python code developed by us under an open source license. MARXS is available at \url{https://github.com/chandra-marx/marxs}; simulations in this article are done with version 2.0.
+
+
+\section{Layout of the X-ray Spectrometer on Arcus}
+\label{sect:layout}
+The Arcus XRS is designed as a double-tilted Rowland Spectrograph (DTRS). This concept is described in detail in Ref.~\citenum{DTRS} and summarized in this section. Every X-ray grating spectrometer consists of three basic elements: A focussing mirror, a set of gratings, and a focal plane for the dispersed photons, usually also covering the direct light that passes through the gratings without getting dispersed. We summarize the layout of the XRS here and refer to our previous ray-tracing papers for details\cite{10.1117/12.2273011,10.1117/12.2312678,DTRS}.
+
+
+For the XRS, the focussing mirror is made from Silicon Pore Optics (SPOs), which are originally developed for the Athena mission\cite{10.1117/12.2188988,10.1117/12.2599339,10.1117/12.2677388}. The XRS will ``sub-aperture'', which means that the SPOs do not cover a full circle, but only a small wedge about 30~deg wide. While the point-spread function (PSF) of a mirror covering the full circle would be rotationally symmetric, the sub-aperturing will lead to an elongated PSF that is relatively narrow (about 1.5~arcsec) in the dispersion direction and wider in the cross-dispersion direction\cite{1987ApOpt..26.2915C,2010SPIE.7732E..1JH,DTRS}, hence yielding higher spectral resolution than the full aperture.
+
+Beyond the mirror, the photons encounter a set of Critical Angle Transmission (CAT) gratings\cite{10.1117/12.926827,2022ApJ...934..171H}. CAT gratings have a high aspect ratio; in the case of Arcus the grating bars are 5.6~$\mu$m high, but only 60~nm wide. CAT gratings are mounted blazed, such that the incoming photons make a small angle (1.8~deg on average for Arcus) to the grating bar side walls. Conceptually, one can think of this as individual photons being reflected of the grating bar side walls and thus CAT gratings disperse most photons to about twice the blaze angle on just one side. Looking at the grating equation for a grating with a period $d$ (200~nm for the XRS) where $n$ is the dispersion order, $\lambda$ the wavelength of the photon, and $\theta$ the dispersion angle
+\begin{equation}
+    n \lambda = d \sin{\theta} \label{eqn:grating}
+\end{equation}
+we see that photons with different $\lambda$ can be dispersed by the same angle, if they are in different dispersion orders. For example, $\lambda=6$~nm photons in dispersion order $n=2$, $\lambda=4$~nm photons with $n=3$, and $\lambda=3$~nm photons with $n=4$ will all be dispersed by the same angle $\theta$ and thus land on the same location of the detector. Since the efficiency of CAT gratings is such that photons are preferably dispersed such that $\theta$ is close to twice the blaze angle, the XRS will detect several dispersion orders with different wavelength at the same location on the detector -- a challenge for the data analysis that we discuss in sect.~\ref{sect:ordersorting}. For higher energies, the CAT gratings will act as phase-shifting gratings, which means that those photons get dispersed into lower orders, but on both sides (typically -2, -1, +1, +2).
+
+\begin{figure}
+    \centering
+    \includegraphics{EQFullDet}
+    \caption {\label{fig:fulldet}
+    Simulated observation of an active star with the XRS. Photons are only shown if detected in one of the 16 CCDs. Note that the dispersion and cross-dispersion axes are scaled differently to highlight the offset between channels in cross-dispersion direction. There are four zeroth orders and four dispersed spectra. Two spectra are dispersed from left to right and two from right to left. Spectra also have small (5~mm) offsets in the dispersion direction to avoid the same wavelength falling into a chip gap for multiple channels.
+}
+\end{figure}
+
+The XRS has four modules (``channels''), each with its own petal of SPOs aligned to its own optical axis and its own set of CAT gratings. However, to reduce cost and power needs, all four channels are arranged to disperse the light on a single focal plane consisting of 2 cameras with 8 CCDs each. The four spectral traces are intentionally offset from each other in the cross-dispersion direction so that they can be separated by the data extraction algorithms (Fig.~\ref{fig:fulldet}).
+
+\section{Cross-talk between channels}
+\label{sect:crosstalk}
+
+\subsection{Cross-dispersion}
+Despite the spatial separation, a small fraction of photons from one channel will be detected as photons of another channel. Figure~\ref{fig:onechannel} shows just the photons from a single channel for the same simulation as fig.~\ref{fig:fulldet}.
+The four dispersed spectra are relatively tight and only a few mm wide. We can define a spectral extraction region for each channel (marked in red in the figure). The spectra appear to be slightly curved, but this only a consequence of subaperturing; without subaperting the spectra would be wider in cross-dispersion direction (as well having a wider line-spread function (LSF) in dispersion direction) and be symmetric. The dispersion direction is not curved, however, given this design, we can make use of the shape we see and define a spatial extraction region that is narrow and also slightly curved for each channel; this way the extraction region is smaller, and thus the contamination and background is lower than for a flat, rectangular extraction region. In figure~\ref{fig:onechannel} four extraction regions for the four channels are shown in red. Each of them covers about 80\% of the photons in that channel.
+
+\begin{figure}
+    \centering
+    \includegraphics{EQFullDet_onechannel}
+    \caption {\label{fig:onechannel}
+    This shows the same simulation as in Fig.~\ref{fig:fulldet} but only shows photons from a single channel (in real observations, we will not always know in which channel a photon originated but in the simulation we can track that). The red area marks a spectral extraction region that contains about 80\% of the photons in this channel. In several locations, cross-dispersed photons are visible, in particular at the zeroth order (around +380~mm), as bands reaching up and down to the right of the zeroth order, and about parallel to the main spectrum around the blaze peak (-350~mm).
+}
+\end{figure}
+
+The figure uses a color scale that highlights faint features and only photons from one channel are shown. The photons fill extraction region for their channel (the top red region) but there are also locations where some photons leak into the extraction regions of other channels. This happens because of cross-dispersion. In the CAT gratings, the primary grating bars are held in place by Si strips with a wider spacing that run perpendicular to the main grating bars (Level 1 or ``L1'' support structure). Those L1 support bars also act as a diffraction grating dispersing perpendicular to the main dispersion direction (up or down in the image). However, since their spacing is much wider and the grating is not blazed in this direction, the efficiency of the L1 bars is only a few percent.
+Cross-dispersion from the zeroth order where photons of all wavelengths are found at the same detector location affects the other channels the most. Close to the zeroth order, some $n=1$ photons are also cross-dispersed into cross-dispersion orders (mostly $m =-3, -2, -1, +1, +2, +3$). The distance of cross-dispersion from the main spectrum depends on the wavelengths of the photons according to the grating equation $m\lambda = d_{\mathrm{L1}}\sin\gamma$, where $m$ is the cross-dispersion order, $\gamma$ the angle, and $d_{\mathrm{L1}}=5\;\mu\mathrm{m}$. Therefore, the cross-dispersion orders run diagonal from the zeroth order around the dispersion coordinate 300~mm. We also see cross-dispersion at higher orders around the blaze peak (about -300~mm) where the cross-dispersion orders run almost parallel to the main spectrum because of the larger distance to the zeroth order.
+
+\subsection{Read-out streaks}
+Since Arcus uses CCDs as detectors, there is another mechanism that also re-distributes photons from their original channel to a position on the detector that will cause them to be assigned to a different channel in the data reduction: Photons arriving during an exposure cause a charge cloud centered on some pixel of the CCD, e.g.\ $(x,y) = (234, 516)$. During the read-out, charge is transferred line-by-line along the $y$ direction of the CCD (``parallel transfer''). If another photon arrives during the read-out at the same time that line 516 is transferred from, e.g., line 123 to line 122 and that new photon hits at line 122, then it will be read out together with the signal from line 516. Thus, it will be assigned $y=516$, not $y=122$. The faster the read-out, the lower the probability that photons arrive during the frame transfer, but the speed of the read-out is limited by the electronics and the acceptable read noise.
+
+While we do not know the $y$ location of any individual photon in this case, we do know the ratio of integration time to frame transfer time and can calculate the fraction of photons that will be assigned a wrong value of $y$ and that will end up in the wrong spectral extraction region.
+
+\subsection{Accounting for channel cross-talk}
+If the dispersion coordinate was the same for all channels, moving a few photons from one channel to another channel would not be a problem. However, in the XRS, two channels disperse left-to-right and two disperse right-to-left and even those channels that are dispersing in the same direction are offset in the dispersion coordinate. Thus, photons will be assigned the wrong dispersion coordinate and thus the wrong wavelength if they are assigned to the wrong channel. As an example, for an emission line spectrum with a strong Ne~{\sc x} line at 1.214~nm, some of those photons leaking into a different channel via readout streaks might appear as an emission line, that, in the dispersion coordinate of the other channel, seems to be at 1.15~nm. The situation is even more difficult for continuum sources where the effect might be less obvious since it does not cause any isolated features, but just increases the apparent level of the continuum, making it harder to find weak absorption lines.
+
+Fortunately, both effects are small for the XRS because the out-of-frame time factions is $<1$\%. The cross-dispersion efficiencies are only a few percent of the dispersion efficiency. Cross-dispersed photons and photons detected during the frame transfer time are both distributed over large regions of the detector and only a very small fraction of them falls into the spatial extraction region of another channel (figure~\ref{fig:onechannel}). Nevertheless, we can measure the efficiency of cross-dispersion and ray-trace the location on which the photons fall and calculate the probability of photons arriving during the frame transfer time. This can than be accounted for in spectral modelling. To follow the example from above, the response matrix file (RMF), that describes in which spectral channel (here: dispersion coordinate) photons of a given energy will be detected, would have a strong peak at 1.214~nm for photons with a true wavelength of 1.214~nm, but also a smaller peak at 1.15~nm. Thus, a spectral model that predicts the line at 1.214~nm will also explain the apparent (misplaced) line at 1.15~nm.
+
+
+
+\section{Order sorting}
+\label{sect:ordersorting}
+Given the $(x, y)$ position on the detector for each detected photon and the geometry of the instrument, we can calculate the angle $\theta$ for each photon. Since we also know $d$, it is often convenient for order-sorting to describe the position of a photon as $n\lambda$. Photons of 60, 30, 20, and 15~\AA{}, diffracted into order 1, 2, 3, and 4 respectively, fall on the same position on the detector, because they have the same value for $n\lambda$. To determine the wavelength of each photon, it must be assigned to an order $n$. This can be done using the intrinsic energy resolution of the CCD. One way to look at the order-sorting is to display the $n\lambda$ coordinate along the x-axis and the CCD energy along the y-axis. Because of their hyperbolic shape, these plots are colloquially known as ``banana plots''. Figure~\ref{fig:banana} shows an example.
+
+\begin{figure}
+    \centering
+    \includegraphics{banana}
+    \caption {\label{fig:banana}
+    Lines in a "banana plot", showing the relation between $m\lambda$ and photon energy for orders -1 to -13. Every value of $n\lambda$ corresponds to a specific position on the detector. The black dots are individual photons from an Arcus simulation.
+}
+\end{figure}
+
+It is easy to analytically calculate the difference in CCD energy between the different orders $n$ and $m$ for any given value of $n\lambda$ (which corresponds to a given location on the CCD): Using eqn.~\ref{eqn:grating} and the photon energy $E = h c / \lambda$, where $h$ is the Planck constant and $c$ the speed of light, we can compare the energies of two photons at the same $d \sin\theta$, but with different orders $m$ and $n$:
+
+$$ d \sin\theta = \frac{m h c}{E_m} = \frac{n h c}{E_n} $$
+
+We can now calculate the difference:
+
+$$\Delta E = E_m - E_n = E_m - E_m \frac{n}{m} =  E_m (1-\frac{n}{m})$$
+
+For a given detector position, the energy difference between two consecutive orders is constant. Re-writing the energy as $n\lambda$ again, we can see that $\Delta E$ is largest for small values of $n\lambda$, closer to the zeroth-order:
+
+\begin{equation}
+    \Delta E = \frac{hc (m-n)}{m\lambda_m} \label{eqn:deltae}
+\end{equation}
+
+The fact that the orders are further apart on one side of the banana plot than on the other one means that order sorting will work better on one side of the detector, while the orders overlap more on the other side.
+
+In a real CCD the energy of each photon is imperfectly measured. For the Arcus CCDs, we predict a FWHM $<70$~eV for the soft X-ray range based on simulations and laboratory measurements of prototype devices\cite{Miller2023}. That means that not all photons that belong to a specific order land exactly on the line in the order-sorting plot. Instead, they are distributed in energy. The black dots in figure~\ref{fig:banana} are photons in an Arcus simulation. The input spectrum is a powerlaw with an exponent of -2. Because the Arcus CCDs are not sensitive to wavelengths above about 60~\AA{}, there are no photons in the plot for $n=-1$ and for $n=-2$ above $m\lambda=125$~\AA{} (our convention is to use negative order number for the blaze peak in CAT gratings). For all orders, the photons cluster around the colored lines, but because of the finite energy resolution of the CCDs, some fall in between orders. Fewer photons are seen in higher orders. This is due to a combination of decreasing efficiency for the CAT gratings for higher energies and the shape of the input spectrum.
+
+How do we assign photons to a specific order, and thus, given $n\lambda$, to a specific wavelength? Every $n\lambda$ corresponds to a specific distance from the zeroth order. We can make a vertical cut through figure~\ref{fig:banana} for a specific value. Figure~\ref{fig:120} shows this for $|n\lambda|=120$~\AA{}. Instead of individual photons from a simulation, the figure shows as shaded area the probability distribution for photons to be detected at a certain CCD energy, given its true diffraction order and true energy. Note that in this plot, every order is shown on the y-axis at the same height to explain the concepts applied here. In practice, the height of each order depends both on the characteristics of Arcus, e.g.\ the quantum efficiency of the CCD changes with energy, and on the spectrum of the source, e.g.\ if the source does not emit any photons below 0.5~keV, then there will be no signal in order -1 to -5 and therefore also no contamination of the extracted order -6 by order -5 photons.
+
+\begin{figure}
+    \centering
+    \includegraphics{120}
+    \caption {\label{fig:120}
+    This plot is a for a specific value of $m\lambda=120$~\AA{}. The vertical lines mark the exact energy that a photon of that order should have at $m\lambda=120$~\AA{}. The distributions show the probability density of detecting a photon of a specific order at a specific energy (from left to right, orders -4, -5, and -6), or in other words, they show the energy distribution that we will observe from a large number of photons in an order. Because these distributions are wider than the distance in energy between two consecutive orders, they overlap. Thus, a photon that arrives at this detector position and has a detected energy of 0.45 keV could be either an order -4 photon or an order -5 photon. See text in section~\ref{sect:ordersorting} for a discussion of the bars on top of the plot.
+}
+\end{figure}
+
+The bars on the top of figure~\ref{fig:120} mark the energy regions that will be extracted for each order. The three sets of bars at $y=16$, $y=15$, and $y=14$ show different possible ways to define the order sorting regions. The top bars at $y=16$ are for a scenario where the extraction regions for the orders touch. This maximizes the number of photons extracted because each photon will be assigned to exactly one extracted spectrum. The cost for this is that an order -5 spectrum will have significant contributions from order -4 and -6, which can complicate spectral fitting.
+On the other hand, a narrower region like the bottom of the three bars (at y=14) is for a scenario where only photons within 30 eV of the expected energy are extracted. One can see that this leads to a considerable loss of photons, because the integrated probability for a photon to land in the extracted regions is less than 60\%; in other words, this choice of extraction region reduces the effective area of Arcus by more than 40\%. However, it also reduces contributions from order -4 and -6.
+
+Other prescriptions for the order-sorting boundaries are possible, for example one could choose to always extract e.g.\ 60\% of the photons. Since the distance between orders depends on $n\lambda$ that means that the width of the extraction region in energy space also depends on $n\lambda$.
+
+So far, the discussion concentrated on the relative importance for each order. In practice, more factors contribute to the effective area. Next, we discuss the actual effective area calculated for Arcus for different order-sorting scenarios.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{osiparf}
+    \caption {\label{fig:osiparf}
+    (a): Effective area for order -6 (the high, central curve) and the two contaminating orders -5 and -7 (lower curves to the left and right). All three contribute to the total effective area in the extracted spectrum, but their contributions are shown here separately. The x-axis shows the true wavelength of the photons seen in the extracted order -6. Even photons $>30$~\AA{} contribute to the extracted -6 order spectrum. Three different scenarios for order sorting are shown.
+    (b) The same plot as on the left, but the x-axis shows the wavelength that will be assigned to the detected photons, not their true wavelength. The central curve is the same, but photons of order -5 and -7 will be assigned the wrong wavelength, since they are erroneously identified as order -6 photons. Those 30~\AA{} photons discussed as example, will be detected around 25~\AA{}, making the identification of any feature more difficult.
+    (c) Ratio of the contaminating orders to the main order.
+}
+\end{figure}
+
+Figure~\ref{fig:osiparf} shows the effective area for order -6 and the contamination from order -5 and -7 for three different scenarios for order sorting. In contrast to the above, the curves shown here now take all contributions to the ARF into account, e.g.\ the chip gaps (which look like small rectangles ``hanging down'' from the curve), the CCD QE, and the filter transmission. Thus, the contribution of order -5 and -7 are no longer the same, unlike in the banana plots above.
+
+All figures here show the effective area for different order-sorting scenarios, where the order sorting regions contain a different fraction of the photons. The scenario with touching extraction regions is called ``osiptouch'', where ``osip'' stands for ``order sorting and integrated probabilities''. In the ``osiptouch'' scenario, the integrated probability to find that a photon of a specific order within the region is maximized by stretching the regions for each order as far as possible without overlapping. This delivers the highest total effective area, but has also the highest contamination; ``osip60'' and ``osip80'' leave a gap in energy space between the extracted orders, such that 60\% or 80\% of all photons will be extracted. This leads to noticeably reduced effective area. However, the contaminating orders are more suppressed than the central order. While the total effective area in the ``osip60'' scenario is 40\% reduced compared to ``osiptouch'', the relative contribution of the contaminating orders drops by a factor of a few.
+
+Fortunately, the energy resolution of the CCDs is good enough that the contamination is low in most cases, but it can be seen in the case of strong emission lines. Figure~\ref{fig:contam} shows a simulation of a continuum spectrum with a strong emission line at 0.5~keV (24.8~\AA{}) that, at its peak, is about two orders of magnitude stronger than the continuum. Indeed, the line is seen strongest at 24.8~\AA{}, but it also appears at $4/5 * 24.8=19.8$~\AA{} and $6/5 * 24.8=29.8$~\AA{} because photons from order -4 and -6 are erroneously allocated to order -5. Photons in order -4 are diffracted only $4/5$ as far as photons of the same energy in order -5, and thus they are found at 19.8~\AA{} in a spectrum that uses the wavelength scale for order -5.
+
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{contam}
+    \caption {\label{fig:contam}
+    Arcus simulation for CCD order -5 for a model with a continuum and a strong emission line at 0.5~keV (24.8~\AA). The line can be seen three times. It is strongest at 24.8~\AA{}, but the contamination from neighboring orders is strong enough to also cause discernible signal aliased to 19.84 and 29.76~\AA{} (equal $m\lambda$).
+}
+\end{figure}
+
+\section{Data analysis}
+\label{sect:dataanalysis}
+Arcus is not the first spectrograph with overlapping orders and multiple extracted spectra and modelling and fitting such spectra is a solved problem. The Chandra/LETGS\cite{10.1117/12.278846,10.1117/12.278845} uses the Chandra/HRC-S detector\cite{10.1117/12.283772}, which essentially has no intrinsic energy resolution, and thus all orders appear in the same extracted count spectrum. In all spectrographs on Chandra, more than one count spectrum is extracted and modeled simultaneously with the same model spectrum. In the LETGS there are two count spectra (positive and negative diffraction) and in the HETGS\cite{2005PASP..117.1144C}, there are five or more (zeroth order with CCD energy resolution, high-energy grating (HEG) positive and negative first order, for deep exposures higher orders can be extracted separately, and medium energy grating (MEG) positive and negative first order, for deep exposures higher orders can be extracted separately). Similarly, in XMM-Newton there are typically five spectra (CCD resolution from the EPN, MOS1, and MOS2 cameras and grating spectra from RGS1 and RGS2\cite{2001A&A...365L...7D}).
+
+In X-ray data analysis, one typically starts with a model spectrum and convolves that with the instrument response to predict the number of observed counts. Model parameters are adjusted to achieve a good fit between the convolved model spectrum and the observed data. The instrument response in this case is the sum of the contributions from the different orders, and all common programs used to model X-ray spectra such as XSPEC\cite{1996ASPC..101...17A}, Sherpa\cite{10.1117/12.447161}, ISIS\cite{2000ASPC..216..591H}, and others implement this using standard OGIP data formats that have been defined over 30 years ago and are common to all X-ray astronomy missions worldwide\cite{1995ASPC...77..219C}.
+Arcus data analysis will follow this heritage.
+
+
+\subsection{Overlapping orders}
+Since the CCDs in the XRS have an energy resolution, standard data products for Arcus will be generated per diffraction order. Products will also be split between the camera which contains the zeroth order and the camera that covers the blaze peak, just to avoid dealing with the large spatial gap between the two cameras in the same file, which would require discontinuous wavelength grids or many channels with zero effective area, vastly increasing the file size. Depending on the exposure time and the spectrum of the source, not all orders may contain usable signal in a particular observation but typically, one will extract spectra for order -2, -1, 0, +1, and +2 from the camera which covers the zeroth order (``near'' camera) and spectra from order -2 to -14 in the other camera (``far'' camera). In the ``near'' camera, orders are well separated (see eqn.~\ref{eqn:deltae}), but for the ``far'' camera, we have to consider contamination from neighboring orders in some cases, which means that each spectrum will be modeled using three effective area files (``ARF'') and three response matrix files (``RMF''). So, for each channel, there will be about 18 extracted spectra (``PHA'' files) and 44 ARF and RMF files. That is more than for the spectrographs on Chandra and XMM, but can be handled with today's fitting programs on a current laptop or desktop computer. Wrapper scripts can simplify reading in and setting up all those files at once.
+
+\subsection{Cross-talk between channels}
+Once the relative location the spectral traces of the four channels is calibrated in space, we can predict at which location photons from one channel will be seen in another channel. Both cross-dispersion and read-out streaks are deterministic and can be built into the ARF and RMF files such that they are automatically accounted for in spectral modelling.
+
+There are two approaches to deal with the four independent channels. One approach is to add spectra for each order for all channels. That reduces the number of files needed for fitting, but also reduces the information content since the information which channel leaks into which other one is lost. For the most precise fitting, data for each channel should be loaded separately, but be fitted at the same time with the same model as it is done today in Chandra/HETG or XMM/RGS.
+
+\subsection{Future developments}
+As shown above, Arcus data can be packaged and fit entirely with existing data formats and modelling codes and this is sufficient to reach the science objectives. However, improved fitting methods can give better results, yet they do require new data formats and software approaches. In the OGIP scheme, every photon is assigned to exactly one order (or a background spectrum).
+While for some photons there is a high degree of certainty to which order they belong (those photons detected very close to the lines in the banana plot infigure~\ref{fig:banana}), others fall between orders and might originate from either. In this case, one could assign a fractional photon to each order to account for the probability that it might belong to either order. However, this approach does not allow for fitting using Poisson likelihoods, since the number of detected photons in each order would no longer be an integer, so it can only be used in the case of very high signal, where the distribution of photons per bin can be approximated as a normal distribution.
+
+Another approach is to fit in a multidimensional space. Instead of extracting a number of 1D spectra, one can perform the fit in the 2D space of the banana plot ($n\lambda$ vs. CCD energy) or even in the 3D space of detector coordinates and CCD energy ($x$, $y$, CCD energy). This would make use of the knowledge which photons are detected close to the expected position, and which photons are ambiguously seen between channels or orders and thus should in principle lead to a more precise determination of model parameters from the same number of observed photons.
+
+An entirely different way to address this is to forgo deterministic, hand-designed calibration files altogether. Instead a ray-trace code is used to simulate PHA files, event lists, or detector images for many possible input spectra. A neural net or other machine learning algorithm is trained to deduce spectral parameters from the observed data. Essentially, the neural net learns to perform the deconvolution from examples and thus there is no need to understand how the detector response behaves in detail, as long as the training data covers the possible range of spectra and detector effects.
+Tools like this are currently developed for CCD resolution spectra\cite{2021RNAAS...5..113R,2023arXiv231118014R}. However, it is not known at this time if a similar approach can work for high-resolution grating spectra. Given the much higher resolution, one might expect that a much larger number of training spectra are needed, which might be beyond the computational power available in the near future, but given the rapid development in the field of machine learning, it is hard to predict the power of those algorithms when Arcus launches. Another concern is that in high-resolution grating data, we typically will not just look at a few overall parameters of a spectral model such as temperature, abundance, or powerlaw exponents, but will analyze individual line profiles or line shifts. In many cases, we do not have physical models that predict these properties from first principles and thus we cannot generate artificial training data for a machine algorithm to learn on. Workarounds such as training on generically parameterized line profiles could be possible, but it is not clear if machine learning is actually advantageous to the more traditional forward folding approach in these cases.
+
+\section{X-ray instrument particle background}
+\label{sect:nxb}
+
+Galactic cosmic ray (GCR) particles interact with the Arcus X-ray instrument camera structure, generating secondary X-rays and electrons that produce signals in the detectors that are indistinguishable from focused celestial X-rays. To first order, this background is uniform across the focal plane due to the isotropic GCR flux, and therefore it has a very different spatial-spectral pattern compared to the diffracted spectra produced by the optics and gratings.
+
+To simulate the effect of this non-X-ray background (NXB) on per-order spectral analysis of Arcus X-ray observations, we produced a model spectrum using in-flight data from CCD detectors on Chandra (ACIS-S3) and Suzaku (XIS1). These heritage detectors share many features with the Arcus X-ray CCDs: identical pixel size (24 $\mu$m), backside illumination with similar depletion depth (45 $\mu$m for ACIS-S3 and XIS1 vs.\ 60 $\mu$m for Arcus), and similar operational and on-board processing parameters. The Chandra ACIS-S3 NXB spectrum was derived from ACIS stowed data taken in 2005--2009, during a time of intermediate Solar activity. The Suzaku XIS1 spectrum was derived from observations of the dark (night) Earth limb taken over the course of the full 2005--2015 mission. Both datasets were filtered in standards ways, with no Cut-Off Rigidity (COR) filtering applied for Suzaku\cite{Tawaetal2008}.
+
+As expected from the detector similarities, the spectra in Figure~\ref{fig:nxb} (left panel) show very similar features: a general power-law slope; instrumental fluorescence lines of O K (0.5~keV), Al K (1.5~keV), Si K (1.7~keV), and Au M (2.3~keV); and upturns at low and high energies. The Chandra NXB is about a factor of four higher than Suzaku when scaled to physical detector area, expected due to the different particle environments in high- and low-Earth orbits. Arcus should have a very similar overall unrejected background event rate to Chandra ACIS, as it will also be outside the Earth's protective magnetic field. There are some important changes we implemented to model the Arcus NXB spectrum:
+
+\begin{figure} [t]
+    \begin{center}
+    \begin{tabular}{c} %% tabular useful for creating an array of images
+    \includegraphics[width=\textwidth]{Fig7}
+    \end{tabular}
+    \end{center}
+    \caption {\label{fig:nxb}
+    (panel a) Observed non-X-ray background (NXB) spectra for the Chandra ACIS-S3 and Suzaku XIS1 CCD detectors, shown with the adopted Arcus model spectrum. XIS1 has a lower background due to Suzaku's low-Earth orbit, compared to the high-Earth orbits of Chandra and Arcus. Other features are discussed in the text. (panel b) Example simulated per-order NXB spectrum, shown along with the number of CCDs and effective area (both with arbitrary scaling) as a function of wavelength. The broad feature peaking near 24 \AA\ in the NXB spectrum is due to the O K fluorescence feature seen near 0.5 keV in panel (a). This demonstrates the subtle effects that the NXB and detector energy response can impose on extracted per-order spectra.
+    }
+\end{figure}
+
+\begin{enumerate}
+    \item The upturn at high energy is removed. This upturn is due to cosmic ray minimum-ionizing particles (MIPs) that hit the detector at normal incidence and traverse the full detector thickness, confined to a single pixel. The distribution of energy each MIP deposits is governed by the detector thickness, but it is quite broad, extending to low energies. Since the Arcus CCD is somewhat thicker (60 $\mu$m) than ACIS-S3 (45 $\mu$m), this feature will move to higher energies above the Arcus band.
+    \item The upturn at low energies from Suzaku is used instead of Chandra. It is likely that the gain scale at low energies for ACIS-S3 is non-linear due to high charge-transfer inefficiency (CTI), and we suspect events here suffer incorrect energy assignment. The Arcus CCD performance at low energies will be much closer to XIS1.
+    \item The instrumental fluorescence lines will likely differ in amplitude for Arcus, but we have kept the Suzaku line strengths to be aware of their presence.
+\end{enumerate}
+
+In practice, we have simply fit an empirical model to the Suzaku spectrum, ignoring the high-energy upturn, and scaled that to match the ACIS-S3 rate at 1 keV.
+
+To create per-order NXB spectra, the CCD NXB model was first converted to cts s$^{-1}$ keV$^{-1}$ \AA$^{-1}$ by multiplying by the spatial cross-dispersion width of the extraction window (50 pixels = 1.2 mm) and by the dispersion relation (in \AA\ mm$^{-1}$) from eqn~\ref{eqn:grating}.  At each response channel wavelength, we integrate the CCD NXB model over a window 70 eV wide, centered on that energy. This results in a spectral count rate in units of cts/s in bins equivalent to those in the per-order response. Finally, we multiply the rate by the number of CCDs contributing to the sensitivity at each wavelength. Example NXB spectra are shown in the right panel of Figure \ref{fig:nxb}; these can be used with per-order Arcus response files to simulate the effects of the NXB on the analysis of faint science targets.
+
+
+
+\section{Summary}
+\label{sect:summary}
+The Arcus XRS is an X-ray spectrograph with four separate channels in a double-tilted Rowland torus configuration. All found channels are imaged onto the set of 16 CCDs, which are split over two cameras with 8 CCDs each. We discuss cross-contamination between channels due to cross-dispersion on the grating support structures and CCD frame transfer. For each channel, several orders will be diffracted towards the blaze peak and will be detected at the same physical detector location. Those orders need to be separated using the intrinsic energy resolution of the CCDs. We show that there will be a slight overlap between orders, but it is mostly relevant for very bright emission lines. All those effects can be handled in the OGIP scheme of PHA, ARF, and RMF files and thus the spectra can be fit with existing and well-tested software packages. We briefly discuss potential improvements of the fitting process by fitting in 2D or 3D space or using machine-learning techniques. Last, we calculate the expected non X-ray background rate for the XRS, which turns out to be so low that it is not relevant except for the faintest sources that we expect the XRS to observe.
+
+
+
+% \disclosures
+\subsection*{Disclosures}
+The authors declare no conflicts of interest.
+
+
+\subsection* {Code, Data, and Materials Availability}
+We use the ray-tracing code MARXS\cite{2017AJ....154..243G,marxs2.0}, a Python code developed by us under an open source license. MARXS is available at \url{https://github.com/chandra-marx/marxs}; simulations in this article are done with version 2.0. The database of grating efficiencies and material properties is available upon request.
+
+
+%In support of open scientific exchange, SPIE journals require Code, Data, and Materials Availability Statements in all accepted papers. This requirement went into effect on 1 May 2023. These statements should describe how to access any data that would be required to replicate or interpret the findings reported in the paper. Authors are encouraged to make the data and code related to the manuscript publicly available whenever possible, and utilize repositories that are well-known to the field (FigShare, Github, CodeOcean, etc.). If the data or code cannot be made publicly available, the authors should state the reason and explain how it can be obtained. Likewise, if data sharing is not applicable, the statement must say so. Example statements may be found in the Author Guidelines for the journal.
+
+
+\subsection* {Acknowledgments}
+Support for this work was provided in part through NASA grant NNX17AG43G and
+Smithsonian Astrophysical Observatory (SAO) contract SV3-73016 to MIT
+for support of the {\em Chandra} X-Ray Center (CXC), which is operated
+by SAO for and on behalf of NASA under contract NAS8-03060.  The
+simulations make use of Astropy, a community-developed core Python
+package for Astronomy\cite{astropy:2022}, numpy\cite{numpy}, and IPython\cite{IPython}.
+
+
+%%%%% References %%%%%
+
+\bibliography{report_with_doi}   % bibliography data in report.bib
+\bibliographystyle{spiejour}   % makes bibtex use spiejour.bst
+
+%%%%% Biographies of authors %%%%%
+\subsection*{Biographies}
+\vspace{2ex}\noindent\textbf{Hans Moritz G\"unther} is a research scientist at MIT. He received his undergraduate degree (in 2005) and his PhD (in 2009) in physics from the University of Hamburg, Germany. After that, he worked at the Harvard-Smithsonian Center for Astrophysics and came to MIT in 2015. He is currently the lead developer of MARX, the ray-tracing software used for the Chandra X-ray observatory. His science interests are in star formation using data from the radio to X-rays.
+
+
+\vspace{2ex}\noindent\textbf{David Huenemoerder} (Ph.D. Astronomy, 1982, University of
+Wisconsin-Madison) joined the MIT Kavli Institute in 1992 as a
+member of the Chandra X-ray Center, for which he is responsible
+for Chandra grating processing and analysis.  He has overseen the
+the development of the Chandra grating data catalog and
+archive (tgcat.mit.edu).  His recent research is on the winds of
+massive stars, diagnosed through high resolution X-ray
+spectroscopy with the Chandra High Energy Transmission Grating
+Spectrometer.
+
+
+\vspace{2ex}\noindent\textbf{Eric Miller} is a Research Scientist at the MIT Kavli Institute for Astrophysics and Space Research. He received his BA in physics from Oberlin College in 1996, and his PhD in Astronomy and Astrophysics from the University of Michigan in 2003. He develops X-ray imaging detectors for future missions, leads the XRISM in-flight calibration team, and studies galaxy clusters and the diffuse intergalactic medium.
+
+%\noindent Biographies and photographs of the other authors are not available.
+
+
+
+%\subsubsection{Reference linking and DOIs}
+%A Digital Object Identifier (DOI) is a unique alphanumeric string assigned to a digital object, such as a journal article or a book chapter, that provides a persistent link to its location on the internet. The use of DOIs allows readers to easily access cited articles. Authors should include the DOI at the end of each reference in brackets if a DOI is available. See examples at the end of this manuscript. A free DOI lookup service is available from CrossRef at \\\linkable{http://www.crossref.org/freeTextQuery/}. The inclusion of DOIs will facilitate reference linking and is highly recommended.
+
+%In the present LaTeX template, the author needs to add the DOI reference by including it in a ``note'' in the bibliography file, as shown in the file {\verb+report.bib+}, for example, \\ {\verb+note = "[doi:10.1117/12.154577]"+}. The DOI may be used by the reader to locate that document with the link: {\verb+http://dx.doi.org10.1117/12.154577+}.
+
+
+\listoffigures
+\listoftables
+
+\end{spacing}
+\end{document}
