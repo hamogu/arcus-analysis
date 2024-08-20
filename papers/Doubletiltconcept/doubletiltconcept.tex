@@ -1,13 +1,5 @@
-%% Beginning of file 'sample631.tex'
-%%
-%% Modified 2021 March
-%%
-%% This is a sample manuscript marked up using the
-%% AASTeX v6.31 LaTeX 2e macros.
-%%
-%%
-%% using aastex version 6.3
-\documentclass[linenumbers]{aastex631}
+%\documentclass[linenumbers]{aastex631}
+\documentclass[twocolumn]{aastex631}
 
 %% The default is a single spaced, 10 point font, single spaced article.
 %% There are 5 other style options available via an optional argument. They
@@ -141,7 +133,7 @@
 %% where dimension is any recognized LaTeX dimension, e.g. pt, in, etc.
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\graphicspath{{./}{figures/}}
+\graphicspath{{./}{figures/}{ifigs/}}
 %% This is the end of the preamble.  Indicate the beginning of the
 %% manuscript itself with \begin{document}.
 
@@ -264,7 +256,7 @@ Figure~\ref{fig:sketch_label} shows sketches of the geometry in the plane spanne
 \begin{figure*}
     \includegraphics[width=0.5\textwidth]{sketch_label}
     \includegraphics[width=0.5\textwidth]{raytrace_labelled}
-    \caption{\emph{left:} Sketch of a tilted Rowland torus geometry shown in the plane of the optical axis and the symmetry axis of the torus. Photons arrive from the left. The location of the mirror is shown as blue box. The optical axis (solid blue line) is offset from the center of the Rowland circle (blue square). The symmetry axis of the torus  is marked as blue long-dashed line. \textbf{The torus is formed by rotating the blue circle around this line. To help visualize the 3D position of the torus blue dotted lines are shown connecting the two circles.} $\alpha$ is the angle between the optical axis and the line from the point where the optical axis intersects the Rowland torus (A) to the center of the Rowland circle. $\beta$ is the angle from optical axis to the line connecting A to the ``hinge'' -- the other point in this plane where symmetry axis of the torus and the Rowland circle intersect.
+    \caption{\emph{left:} Sketch of a tilted Rowland torus geometry shown in the plane of the optical axis and the symmetry axis of the torus. Photons arrive from the left. The location of the mirror is shown as blue box. The optical axis (solid blue line) is offset from the center of the Rowland circle (blue square). The symmetry axis of the torus  is marked as blue long-dashed line. The torus is formed by rotating the blue circle around this line. To help visualize the 3D position of the torus blue dotted lines are shown connecting the two circles. $\alpha$ is the angle between the optical axis and the line from the point where the optical axis intersects the Rowland torus (A) to the center of the Rowland circle. $\beta$ is the angle from optical axis to the line connecting A to the ``hinge'' -- the other point in this plane where symmetry axis of the torus and the Rowland circle intersect.
     \emph{right:} Visualization of a ray-trace of the same geometry. Colored lines show the path of individual rays starting on the left. Rays detected in the zeroth order are shown in green, blue and purple are higher orders. Optical axis and the axis of the Rowland torus are indicated in blue and the location of detectors in orange, matching the sketch in the left panel.
         }
     \label{fig:sketch_label}
@@ -286,10 +278,10 @@ For a single Rowland torus with no tilt, the optical axis passes through the cen
 To avoid the same wavelength to fall in a chip gap on the detector for both the positive and the negative diffraction orders, it is useful to position the CCDs with an offset, so that the chip gaps are not symmetric.
 \begin{figure}
   \begin{interactive}{js}{ifigs/on-axis.zip}
-  \includegraphics[width=0.22\textwidth]{ifigs/on-axis_overview}
-  \includegraphics[width=0.22\textwidth]{ifigs/on-axis_aperture}
-  \includegraphics[width=0.22\textwidth]{ifigs/on-axis_gratings}
-  \includegraphics[width=0.22\textwidth]{ifigs/on-axis_detector}
+  \includegraphics[width=0.22\textwidth]{on-axis_overview}
+  \includegraphics[width=0.22\textwidth]{on-axis_aperture}
+  \includegraphics[width=0.22\textwidth]{on-axis_gratings}
+  \includegraphics[width=0.22\textwidth]{on-axis_detector}
   \end{interactive}
 \caption{3D images of the ray-trace for a source with a continuum spectrum over a limited bandpass, seen (from left to right) from the side, from the top (where the rays enter the aperture), zoom on the grating positions, and zoom on the detector. Rays are shown from the entrance aperture on. They pass a focussing mirror represented by a green box and get diffracted by gratings (white squares). They are detected by CCDs (orange). Rays are colored by the diffraction order: Light green are zero order photons. A section of the Rowland torus is shown as transparent gray. The big square at the right indicates the position of the focal plane. Rays are traced past the detectors to the focal plane to show how the CCDs on the Rowland circle capture the rays where the dispersion width is smallest - past the CCDs the rays widen in dispersion direction again, but still become narrower in cross-dispersion direction. This figure is interactive in the online version, allowing the reader to pan, zoom, and rotate to see those details and inspect the rays from all angles. (Use the mouse to rotate, mouse wheel to zoom, and double-click to focus on a particular element. Right click to navigate to the pre-defined viewpoints shown in the static figure. On other devices, other native controls might be available, e.g.\ two-finger touch to zoom on touchscreens.)
 \label{fig:3d:single}}
@@ -300,23 +292,23 @@ To avoid the same wavelength to fall in a chip gap on the detector for both the 
 
 %alpha, beta, equations. notation different from Ralf.
 
-\begin{figure}
+\begin{figure*}
     \centering
     \includegraphics[width=0.9\textwidth]{ondetector}
-    \caption{Distribution of photons on the detectors for different designs. \emph{left:} Location where photons pass the aperture and SPOs. \emph{right:} Location photons on a curved detector projected onto the focal plane \textbf{for a monoenergetic source}. Photons are colored by channel and the position of the zero(s) order(s) is highlighted with red boxes. Note that the dispersion (along the $y$ axis) and cross-dispersion ($z$ axis) directions are not to scale. \textbf{Our toy example detects order -1 and +1 for the on-axis Rowland torus and orders -3, -4, and -5 for the tilted Rowland tori.} In the lower two panels the zeroths orders of one channel overlap with the dispersed photons from another channel. This could be avoided with larger offsets between channels in cross-dispersion direction. Also, in real instruments with focal lengths significantly larger than in the illustrative model we use throughout this article, the bending and the width in cross-dispersion direction are typically smaller, so that this is not a problem in practice.
-    \textbf{\emph{right:} Same as in the middle row, but for a continuum source. Again, photons for a specific energy are detected in several orders, but photons from other energies are detected in different locations, so the orders cannot be separated just based on their spatial location.}
+    \caption{Distribution of photons on the detectors for different designs. \emph{left:} Location where photons pass the aperture and SPOs. \emph{right:} Location photons on a curved detector projected onto the focal plane for a monoenergetic source. Photons are colored by channel and the position of the zero(s) order(s) is highlighted with red boxes. Note that the dispersion (along the $y$ axis) and cross-dispersion ($z$ axis) directions are not to scale. Our toy example detects order -1 and +1 for the on-axis Rowland torus and orders -3, -4, and -5 for the tilted Rowland tori. In the lower two panels the zeroths orders of one channel overlap with the dispersed photons from another channel. This could be avoided with larger offsets between channels in cross-dispersion direction. Also, in real instruments with focal lengths significantly larger than in the illustrative model we use throughout this article, the bending and the width in cross-dispersion direction are typically smaller, so that this is not a problem in practice.
+    \emph{right:} Same as in the middle row, but for a continuum source. Again, photons for a specific energy are detected in several orders, but photons from other energies are detected in different locations, so the orders cannot be separated just based on their spatial location.
         }
     \label{fig:fish}
-\end{figure}
+\end{figure*}
 
 \begin{figure}
     \centering
     \includegraphics[width=0.4\textwidth]{blazed}
-    \caption{\textbf{Concept of a blazed grating. The black grating is perpendicular to the incoming rays, the black grating is blazed by and angle $\gamma$ with respect to the incoming rays. The most likely direction for the diffracted photons is near twice the blaze angle.}}
+    \caption{Concept of a blazed grating. The black grating is perpendicular to the incoming rays, the black grating is blazed by and angle $\gamma$ with respect to the incoming rays. The most likely direction for the diffracted photons is near twice the blaze angle.}
     \label{fig:blazed}
 \end{figure}
 
-XMM-Newton uses a Rowland torus tilted with respect to the optical axis \citep{2010SSRv..157...15P}; \citet{2010SPIE.7732E..1JH} suggested using the same geometry for Critical Angle Transmission (CAT) gratings. In CAT gratings \citep{2021hai4.book..235H,2022ApJ...934..171H}, the grating bars have a high aspect ratio, that is the distance between two gratings bars is much smaller than the height of the bars. CAT gratings are used at a blaze angle, where the grating bars are inclined with respect to the incoming rays \textbf{(see figure~\ref{fig:blazed})}. CAT gratings preferentially diffract photons to twice the blaze angle and can reach high diffraction efficiencies: \citet{2022ApJ...934..171H} measured $>20$\% summed over orders 4-7 at 1.8~keV. However, the blaze angle also means that the gratings can deviate significantly from the surface of the  Rowland torus. To minimize this deviation, the Rowland torus can be tilted.
+XMM-Newton uses a Rowland torus tilted with respect to the optical axis \citep{2010SSRv..157...15P}; \citet{2010SPIE.7732E..1JH} suggested using the same geometry for Critical Angle Transmission (CAT) gratings. In CAT gratings \citep{2021hai4.book..235H,2022ApJ...934..171H}, the grating bars have a high aspect ratio, that is the distance between two gratings bars is much smaller than the height of the bars. CAT gratings are used at a blaze angle, where the grating bars are inclined with respect to the incoming rays (see figure~\ref{fig:blazed}). CAT gratings preferentially diffract photons to twice the blaze angle and can reach high diffraction efficiencies: \citet{2022ApJ...934..171H} measured $>20$\% summed over orders 4-7 at 1.8~keV. However, the blaze angle also means that the gratings can deviate significantly from the surface of the  Rowland torus. To minimize this deviation, the Rowland torus can be tilted.
 This tilt can be described by two angles $\alpha$ and $\beta$ as shown in figure~\ref{fig:sketch_label}. $\alpha$ is the angle between the optical axis and the line from the point where the optical axis intersects the Rowland torus (labelled ``A'' in the figure) and the center of the Rowland circle.  We choose the distance between point A and the focal point F to be slightly shorter than the focal length $f$ of the mirror to allow for space to mount the gratings behind the mirror and use the symbol ``a'' for the distance between A and F.
 In this configuration, the torus has $R < r$ so there are two points where the torus overlaps itself in the plane spanned by the optical axis and the symmetry axis of the torus (the plane shown in figure~\ref{fig:sketch_label}). The first of those intersection points is F. We call the second point ``Hinge''.
 $\beta$ is the angle from optical axis to the line connecting A and the Hinge. From this we can derive the radius of the Rowland circle as
@@ -345,14 +337,14 @@ which places the center of the torus at
 %Assuming CAT gratings where the gratings bars are perpendicular to the surface of the grating, the gratings need to be installed blazed (tilted) with respect to the incoming rays. Thus, they deviate more from the Rowland-torus than a grating that is placed perpendicular to the incoming rays.
 For real CAT gratings typical blaze angles are 1-2~deg. Figure~\ref{fig:3d:tilted} shows this layout in 3D, but with a very large blaze angle for clarity. Tilting the Rowland torus by about twice the blaze angle reduces the average deviation of the grating position from the surface of the Rowland torus.
 %Also, CAT gratings disperse predominantly in one direction. ]
-The Rowland geometry optimizes the spectral resolving power by minimizing the spread of the photons in dispersion direction; detectors are located on the Rowland circle, which represents the position of minimal spread in dispersion direction. This is not the same location as the imaging focal plane, which is defined by minimizing the total size of the 2D PSF. At the focal point, the Rowland circle and the imaging focal plane match. Figure~\ref{fig:fish} \textbf{(right column)} shows how the dispersed photons spread out in cross-dispersion direction with increasing distance from F, roughly resembling the outline of a fish. With a tilted Rowland torus, there is a second intersection point between the spectral and the imaging focus where the cross-dispersion width becomes small (the point between the body and the tail of the fish, the ``Hinge'', about +300~mm in dispersion direction in the second panel of figure~\ref{fig:fish}). This location can be chosen to be roughly in the center of the dispersed spectrum and thus limit the cross-dispersion profile to reduce the area of the detector that contributes to the extracted signal and thus the background. We note that the width in cross-dispersion direction is much larger for larger diffraction angles and, in real instruments, will be smaller than shown in the figure.
+The Rowland geometry optimizes the spectral resolving power by minimizing the spread of the photons in dispersion direction; detectors are located on the Rowland circle, which represents the position of minimal spread in dispersion direction. This is not the same location as the imaging focal plane, which is defined by minimizing the total size of the 2D PSF. At the focal point, the Rowland circle and the imaging focal plane match. Figure~\ref{fig:fish} (right column) shows how the dispersed photons spread out in cross-dispersion direction with increasing distance from F, roughly resembling the outline of a fish. With a tilted Rowland torus, there is a second intersection point between the spectral and the imaging focus where the cross-dispersion width becomes small (the point between the body and the tail of the fish, the ``Hinge'', about +300~mm in dispersion direction in the second panel of figure~\ref{fig:fish}). This location can be chosen to be roughly in the center of the dispersed spectrum and thus limit the cross-dispersion profile to reduce the area of the detector that contributes to the extracted signal and thus the background. We note that the width in cross-dispersion direction is much larger for larger diffraction angles and, in real instruments, will be smaller than shown in the figure.
 
 \begin{figure}
     \begin{interactive}{js}{ifigs/tilted.zip}
-    \includegraphics[width=0.22\textwidth]{ifigs/tilted_overview}
-    \includegraphics[width=0.22\textwidth]{ifigs/tilted_aperture}
-    \includegraphics[width=0.22\textwidth]{ifigs/tilted_gratings}
-    \includegraphics[width=0.22\textwidth]{ifigs/tilted_detector}
+    \includegraphics[width=0.22\textwidth]{tilted_overview}
+    \includegraphics[width=0.22\textwidth]{tilted_aperture}
+    \includegraphics[width=0.22\textwidth]{tilted_gratings}
+    \includegraphics[width=0.22\textwidth]{tilted_detector}
     \end{interactive}
   \caption{Ray-trace like figure~\ref{fig:3d:single}, but for a tilted Rowland torus setup. See figure~\ref{fig:3d:single} for an explanation of the elements shown in the image and the interactivity in the online version.
   }
@@ -360,21 +352,9 @@ The Rowland geometry optimizes the spectral resolving power by minimizing the sp
   \end{figure}
 
 A tilted Rowland torus can also be combined with sub-aperturing. % to increase the spectral resolving power as discussed in figure~\ref{fig:subaperture}.
-In this case, not all the fish shape is filled with photons. This can be seen by comparing the dark purple points in the second, third, and fourth panel in figure~\ref{fig:fish}, \textbf{right column}. The Rowland torus for this channel has the same tilt and dimensions in all three designs, but in the second panel, the mirror fills the full circle, in the third panel it has just two rectangles, and in the fourth panel just one. In either case, the spectral extraction region used in data analysis should take this shape into account to minimize detector background.
+In this case, not all the fish shape is filled with photons. This can be seen by comparing the dark purple points in the second, third, and fourth panel in figure~\ref{fig:fish}, right column. The Rowland torus for this channel has the same tilt and dimensions in all three designs, but in the second panel, the mirror fills the full circle, in the third panel it has just two rectangles, and in the fourth panel just one. In either case, the spectral extraction region used in data analysis should take this shape into account to minimize detector background.
 
 \subsection{Double tilted Rowland Torus}
-
-
-%\begin{figure}
-%    \begin{interactive}{js}{ifigs/double.zip}
-%    \includegraphics[width=0.22\textwidth]{ifigs/double_overview}
-%    \includegraphics[width=0.22\textwidth]{ifigs/double_aperture}
-%    \includegraphics[width=0.22\textwidth]{ifigs/double_gratings}
-%    \includegraphics[width=0.22\textwidth]{ifigs/double_detector}
-%    \end{interactive}
-%  \caption{Ray-trace like figure~\ref{fig:3d:tilted}, but with channels split on two separately tilted Rowland tori. See figure~\ref{fig:3d:single} for an explanation of the elements shown in the image and the interactivity in the online version.}
-%  \label{fig:3d:tilted_double}
-%\end{figure}
 
 Sub-aperturing reduces the geometric area of the mirror and thus the effective area of the instrument. This can be compensated by adding a second channel, with mirrors mounted next to the mirrors of the first channel. Again, gratings and detectors for this second channel need to be positioned on a Rowland torus. However the two Rowland tori for the two channels need not be identical. When $R> r$ the Rowland circle intersects the focal plane twice. We choose those two points as the focal points for the two channels of the instrument; this layout is symmetric with respect to the center of the Rowland circle (figure~\ref{fig:sketch}, right). By selecting $\alpha$ close to the average dispersion angle of dispersed photons, we can reach a configuration where the same detectors that detect the zeroth order of one channel, will now also detect the dispersed photons of the other channel and vice versa. The second channel also adds redundancy in case of detector failure, and can compensate for chip gaps if the position of the detector elements on one channels is moved along the Rowland circle a little bit with respect to the other channel. %Figure~\ref{fig:3d:tilted_double} shows a ray-trace for this configuration.
 
@@ -383,10 +363,10 @@ The next two subsections explain how the channels can be offset in both dispersi
 
 \begin{figure}
     \begin{interactive}{js}{ifigs/offset.zip}
-    \includegraphics[width=0.22\textwidth]{ifigs/offset_overview}
-    \includegraphics[width=0.22\textwidth]{ifigs/offset_aperture}
-    \includegraphics[width=0.22\textwidth]{ifigs/offset_gratings}
-    \includegraphics[width=0.22\textwidth]{ifigs/offset_detector}
+    \includegraphics[width=0.22\textwidth]{offset_overview}
+    \includegraphics[width=0.22\textwidth]{offset_aperture}
+    \includegraphics[width=0.22\textwidth]{offset_gratings}
+    \includegraphics[width=0.22\textwidth]{offset_detector}
     \end{interactive}
     \caption{Ray-trace like figure~\ref{fig:3d:tilted_double}, but with offsets in dispersion and cross-dispersion direction. See figure~\ref{fig:3d:single} for an explanation of the elements shown in the image and the interactivity in the online version.
         }
