@@ -1,0 +1,151 @@
+We thank the referee for their time spent reviewing the manuscript. The quality of the feedback expressed in the review makes it apparent that the referee is an expert in the Rowland geometry. However, as we note in our response below, we disagree that the general principles of the geometry are as widely known by the broader astronomical community as claimed by the referee. Moreover, none of the prior discussion of the DTRS concept appears in peer-reviewed publications. This paper is intended to address these shortcomings of the literature.
+
+
+The referee has made some specific suggestion with figures to combine or remove and we address those below (note that this means that figures in the new manuscript are renumbered and might not match the figure numbers in the previous referee's comments any more). We highlighted new or changed text in bolt font for the re-submission, but we also shortened several of the discussions in the paper, consistent with the referee’s suggestion to focus on information not presented elsewhere. Given the difficulty of reading through the substantial amount of strike-through figures and strike-through text, we opted to fully remove (instead of strike-through) text that we no longer need.
+
+Below, our specific responses to the referee's comments are keyed in between the referee's comments.
+
+
+Reviewer:
+The paper gives a full description of the 'concept of a Double Tilted Rowland Spectrograph for X-rays' but the level of new information is rather limited given the extensive literature by the authors and the reference to FUSE (moose 2000) and many others .
+
+>>> We want to point out that the FUSE design (Moose 2000) is similar in some aspects, but very different on a few key points:
+- FUSE uses reflective gratings, not transmission gratings.
+- In FUSE, the gratings are illuminated at almost normal incidence and thus entrance aperture and detectors are on the same side of the Rowland circle, not on opposite sides as in our design.
+- FUSE does not detect the zeroth orders.
+- FUSE does not place all diffracted spectra next to each other on the same read-out array.
+
+
+
+For publishing it in ApJ my recommendation is to limit the paper to the really new information and not describe the details (and even repeat them in the paper itself). From my understanding the really new information is probably:
+
+- The use of an offset in the cross dispersion direction
+- The discussion about alignment accuracies but, these are only described qualitatively whereas the new information (using the tools) is probably the quantitative information
+- Correctly one of the identified drawback is the background (in section 4.2.2). Quantifying under which conditions DTRS or a more classical Rowland angle design is better would be a really new contribution
+- Various aspects are not discussed in the paper including order separation and mirror scattering in the cross dispersion direction. Probably this is nicely included on the available tools but how this impacts the performance is not quantified
+
+Hence I would recommend to ask the authors to rewrite the paper significantly, limiting it to the real new information compared to previous articles.
+
+>>> We believe that the comments above are partially related to a misunderstanding about what has been published in "previous articles". It is true that we have written about the concept of the Double Tilted Rowland Spectrograph (DTRS) before specifically for the Arcus mission. However, that work so far has only appeared in conference proceedings (Proceedings of the SPIE), not in refereed journals. We believe that a prior publication in a conference proceeding should not preclude publication of a proper article. Those previous proceedings are also specific to Arcus: They use the Arcus focal length, the specific size in mm for the gratings that Arcus is proposed to have etc. On the one hand, that allows us to be very specific about the resolving power and effective area of the instrument in those conference proceedings, but does not include a general discussion of underlying CONCEPT in general. In this article, the discussion is necessarily more qualitative (because it is not specific to a specific number for focal length, grating size etc.), but more general, so we believe that it adds some value even for those readers who are familiar with with our previous proceedings; we thus regard content as "new" even if it has been described specifically in the Arcus proceedings before.
+We have added sentences to the introduction to make this goal and the quality of prior work explicit.
+We have also gone through the text to remove duplication and improve the flow by shortening, in particular in section 2, which describes the background for our work. In total, the re-submitted work is about 1.5 pages shorter than our original submission.
+
+
+
+For previous papers you can also look also the following papers although the paper by Moose describes most of the technology.
+
+Varied Line-Space Gratings: Past, Present and Future by Michael C. Hettrick, Proc. Soc. Photo-Opt. Instr. Eng. vol. 560, pp. 96-108 (1986)
+http://dx.doi.org/10.1117/12.949620
+
+>>> We have added this reference to the section about "dispersive elements" (sect 2.2).
+
+
+
+Space Sci Rev (2010) 157: 15-24 DOI 10.1007/s11214-010-9719-y, X-ray Diffraction Gratings for Astrophysics by Frits Paerels
+
+>>> Given the length of the paper (which the referee suggested to shorten significantly), we had chosen to not discuss those review articles. However, we agree that this is a useful article and added a reference to this paper.
+
+
+
+Draft version June 22, 2022 Typeset using LATEX default style in AASTeX631 X-ray performance of critical-angle transmission grating prototypes for the Arcus mission by Heillman
+
+>>> This article was already cited and discussed in the version we initially submitted. That work discusses the details of how the gratings are made and how efficient they are, but not how they are used in a Double-Tilted Rowland Spectrograph.
+
+
+
+All figures: add coordinates to the plots (X, Y, Z (is the direction of the X-rays?)
+
+>>> Fig 1 and 2 already had x,y,z. For the 3D plots actually adding a floating coordinate system that stays visible and renders well in the webbrowser is surprisingly difficult and required significant effort, but it has now been added to the 3D renderings. In Fig 9, we just describe the relation to the global X,Y,Z in the figure caption, since the dispersion coordinate is read along the curved Rowland circle. In our layout, not even at the focal points does this exactly coincide with the x axis of the coordinate system.
+
+
+
+
+Datailed comments (apart of the length of the paper):
+
+Section 2.1 end: figure 1 is well known and does not need to be illustrated and can be summarized shortly.
+
+>>> When we presented this or similar work in talks, we've found that even people who were involved in the design of Chandra are surprised when we point out the LETG and HETG would have higher resolving power, had Chandra chosen to sub-aperture. It thus seems that the community to which this is "well known" is limited to instrument designers. Since ApJ is a general purpose astronomy journal we've chosen to include this as a figure to make it clear. We admit that this figure does not contain "new information" but merely illustrates previous knowledge, but given how central this is this to the rest of the article, we suggest that it is worthwhile to show in a figure and have thus left it in this version - if this argument does not convince the referee, we will remove it in the next resubmission.
+
+
+
+Section 2.2: a correct statement about 'larger gratings (line 7) but this is not the topic of this paper)
+
+>>> Grating size is not the main topic of this paper, but the main motivation for Heilmann et al. to introduce a tilted Rowland torus to transmission gratings was to reduce the average deviation between grating and Rowland torus. For small gratings, that distance is always small, so it seems relevant to at least bring up the topic of grating sizes.
+
+
+
+Section 3 Figure 3: in figure 2 the suggestion is given that the mirror covers a circular sub-aperture of the full mirror plane while in the ARCUS paper this is much clearer described (two 'rectangular' subsections. This would also make figure 4 more understandable.
+
+>>> We like the referee's suggestion (in a point below) to also add the aperture to the figure that shows the distribution of photons on the focal plane (currently Fig 5). That clearly shows the area covered by mirror+gratings.
+In Fig 2, we have shown a tilted, but not sub-apertured scenario. In our setup for this scenario, the mirror does cover the full circle, not a rectangular subsection.
+We also want to note that, in our previous version, we had chosen to use wedges, not rectangles for layout of the gratings in the sub-apertures. For the purpose of this article though the exact shape does not matter - our simulations are meant to illustrate the concept, not to match any particular mission. However, since our use of wedges seems to be unclear, we have redone this now with rectangles for the grating layout to better match the shape of the green boxes we use for the mirrors in our visualization. (Arcus uses something in between that is not quite a rectangle, but is wider at the tip than at the bottom.)
+
+
+
+Section 3.2 Figure 4: what is the added value compared to fig 2
+
+>>> In the electronic version, Fig 4 is interactive and Fig 2 is not. For the static version of the article, Fig 4 shows four views including a view of the focal plane, and a zoom-in on the gratings, which is not visible in Fig 2.
+
+
+
+Section 3.2 just below figure 4: The use of tilted Rowland circles is used already for a long time in space missions (see RGS on XMM-Newton). The new step introduced by Heilman is that this can also be achieved by Critical Angle Transmission gratings. In this sense using tilted Rowland cicles is a well known concept.
+
+>>> We re-worded that sentence.
+
+
+
+Frig 5: blue and black colors are not easy to distinguish. Also the figure becomes more clear if at the rich side a panel is shown with the mirror aperture used for each of the sub-panels.
+
+>>> There were no black points in Fig 5, maybe the referee meant dark purple and blue? We understand the point, but there are are only so many colors we can choose from, also taking into account common combinations to avoid for accessibility (e.g. red/green blindness). We've re-done the figure with different colors. We thank the referee for the suggestion to add the mirror aperture to the figure.
+
+
+
+In the same paragraph (5 lines lower) high diffraction efficiencies are mentioned. Omn the various simulatiopns/descriptions this is further neglected. It wopuld be good to quantify this.
+
+>>> We added a number and a reference.
+
+
+Equation 3: I do not believe anywhere the y component is used (but probably it is included as it is part of the software tools (but then y not equals zero).
+
+>>> We want to be explicit here that the focal point is indeed in the plane that we show in the sketches - the sketches are not a projection onto the z=0 plane, but a cut at the z=0 plane and the focal point is in that plane. (With the addition of the x,y,z vectors to all images, we standarized the coordinate system so that z is now the cross-dispersion direction, so whatever was previously called y is now z.)
+
+
+
+Section 3.3: Figure 6 and 7 are another set of similar figures, reducing it to fig 7 should be considered as in fig 2 you describe the basic principle and in fig 7 you give the final concept.
+
+>>> Going from one Rowland Torus to two is a pretty big conceptual step. We have explained the development of the double-tilted Rowland torus in several talks with different audiences (both observing astronomers and instrument builders) and always found that it is conceptually challenging, thus we want to make sure that there is enough detail in the article to explain to the reader how we get there, not just "what the answer is". Thus, our attempt to break it in four steps:
+1. Chandra-like (and thus well known to many in the community) - old Fig 4
+2. tilted torus (old Fig 6)
+3. two tilted tori (old Fig 7)
+4. two tilted tori, with the two parts of the two tori offset from each other (old Fig 8).
+
+However, we also understand the referee's concern that the article is long and, for the expert reader, contains too much material that is repeated. So, in order to reduce the number of figures, we've removed the old Fig 7 since Fig 7 and 8 look much more similar than Fig 6 and 7.
+(Note however, that by reordering material and removing figures, the figure numbers have changed in the resubmitted version.)
+
+
+
+Section 3.4.1 is probably the most relevant extension of earlier papers although I did not check if this is not already in the published ARCUS proposal
+
+>>> We want to be explicit that there is no such thing as a "published ARCUS proposal". Like all proposals, the Arcus proposal submitted to NASA is strictly confidential; even if the referee has access to this proposal in some capacity, it is not relevant to the review of this article.
+The goal of this article is to describe the general concept in the refereed literature, as opposed to previous conference proceedings where we always wrote about one specific mission concept.
+
+
+
+Section 4.1.1: The advantage of subaperturing is presented at the cost of the technical compelkxity achieving a better PSF. As such it is true but one limits the usable open area provided by a satellite (with a circular shaoe). Alternatively one populate the unsused open area at the cost of an ectra detector to collect the dispersed X-rays in a 90 degree rotated system
+
+>>> We have looked at extra detectors before, but one goal of the DTRS design is to avoid this. We added a short discussion of this alternative.
+The question of what is a better use of the open area depends, as the referee points out, on the shape of the opening and the shape of the mirror. For example, in Arcus, the open area is constrained by the shape of the boom (square) while in Chandra the open area is a circle. For Arcus or Athena where the mirror is made out of stacks of SPOs the "mirror shape" can be arranged in different ways for a sub-aperture (e.g. a square or a wedge), while mirrors using full shells like Chandra cover a circle. Thus, there can be no general answer - it depends on the specific mission design and is not an advantage of disadvantage of the DTRS as a general concept.
+We discussed a setup like the referee suggested (with a 90 degree rotated system) in a previous paper focussed on the Lynx mission. We have added a reference to that paper.
+
+
+
+Figure 9: it could be good to identify which parts of the recorded data is to to the dispersion of the photons perpendicular to the main dispersion direction. How does this affect the dispersed spectram?
+
+>>> While this is an interesting discussion, we believe that it is beyond the scope of this article. The referee already pointed out that the length of the article is a concern, and thus we intentionally left out the problem of order-sorting and a quantitative analysis of cross-dispersion. Both depend sensitively on the specific design and this this is hard to generalize without discussing a specific mission concept, which is not in scope for ApJ instrumentation papers. For example, the fraction of photons that are cross-dispersed depends almost linearly on the spacing of cross-dispersion structure and the dimensions of the support structure. Prototype gratings for Arcus use bars with 0.9 mu width for the support structures in cross-dispersion direction, but e.g. for the gratings Lynx the bars would have been thinner and thus the fraction of photons that are cross-dispersed would be lower; one could also test if larger spacing of the grating support structures in the cross-dispersion direction are sufficient for structural stability and reduce the cross-dispersion that way. So it really depends on the specific gratings and cannot be answered in general.
+
+
+
+Fig 10: contains essentially the same as figure 9, I would reduce this to a single figure
+
+>>> We originally included Fig 10 because some details are better seen in the larger scale compared to Fig 9, but the referee is correct: The same data is shown and thus we removed Fig 10 and the associated text to reduce the length of the article.
+

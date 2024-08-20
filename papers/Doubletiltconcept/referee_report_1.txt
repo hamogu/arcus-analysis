@@ -1,0 +1,104 @@
+02-May-2024
+
+Dr. Hans Moritz Guenther
+MIT
+Kavli Institute for Astrophysics and Space Research
+77 Massachusetts Avenue
+NE83-569
+Cambridge, MA 02139
+
+
+Title: Concept of a Double Tilted Rowland Spectrograph for X-rays, AAS53933
+
+Dear Dr. Guenther,
+
+I have received the reviewer's report on your above submission to The Astrophysical Journal and is appended it below. As you will see, the reviewer feels that your manuscript is not acceptable for publication in its present form. The reviewer has a list of specific comments designed to help you improve the manuscript.
+
+I note that the referee suggests removing some of the background material; I suspect a paper which includes this material but which makes much clearer waht the novelty is would be acceptable.
+
+Click the link below to upload your revised manuscript;.
+https://aas.msubmit.net/cgi-bin/main.plex?el=A3KO1nE2A4prm5J2A9ftdKtTxYUq3Xj4uHDQNUmJAZ
+Alternatively, you may also log into your account at the EJ Press web site, https://apj.msubmit.net. Please use your user's login name: hamogu. You can then ask for a new password via the Unknown/Forgotten Password link if you have forgotten your password.
+
+When you resubmit, please outline the revisions you have made in response to each of the reviewer's comments using plain text in the field provided when you upload the revised manuscript. Citing each of the reviewer's comments immediately followed by your response would be particularly helpful.
+
+Reviewers find it helpful if the changes made to the text in your revised manuscript are easily identified. This can be done by using boldface (for minor changes) or color (for more extensive changes or additions).
+
+The AAS Journals have adopted a new policy that manuscript files become inactive, and are considered to have been withdrawn, six months after the most recent reviewer's report has been sent to the authors.
+
+If you have any questions, feel free to contact me.
+
+Sincerely,
+Chris Lintott
+University of Oxford
+Department of Physics
+chris.lintott@aas.org
+
+----------------------------------------------------------------------
+Reviewer Report
+Reviewer:
+The paper gives a full description of the 'concept of a Double Tilted Rowland Spectrograph for X-rays' but the level of new information is rather limited given the extensive literature by the authors and the reference to FUSE (moose 2000) and many others . For publishing it in ApJ my recommendation is to limit the paper to the really new information and not describe the details (and even repeat them in the paper itself). From my understanding the really new information is probably:
+
+- The use of an offset in the cross dispersion direction
+- The discussion about alignment accuracies but, these are only described qualitatively whereas the new information (using the tools) is probably the quantitative information
+- Correctly one of the identified drawback is the background (in section 4.2.2). Quantifying under which conditions DTRS or a more classical Rowland angle design is better would be a really new contribution
+- Various aspects are not discussed in the paper including order separation and mirror scattering in the cross dispersion direction. Probably this is nicely included on the available tools but how this impacts the performance is not quantified
+
+Hence I would recommend to ask the authors to rewrite the paper significantly, limiting it to the real new information compared to previous articles.
+
+
+
+For previous papers you can also look also the following papers although the paper by Moose describes most of the technology.
+
+Varied Line-Space Gratings: Past, Present and Future by Michael C. Hettrick, Proc. Soc. Photo-Opt. Instr. Eng. vol. 560, pp. 96-108 (1986)
+http://dx.doi.org/10.1117/12.949620
+
+Space Sci Rev (2010) 157: 15-24 DOI 10.1007/s11214-010-9719-y, X-ray Diffraction Gratings for Astrophysics by Frits Paerels
+
+
+Draft version June 22, 2022 Typeset using LATEX default style in AASTeX631 X-ray performance of critical-angle transmission grating prototypes for the Arcus mission by Heillman
+
+
+All figures: add coordinates to the plots (X, Y, Z (is the direction of the X-rays?)
+
+
+
+
+
+
+
+Datailed comments (apart of the length of the paper):
+
+Section 2.1 end: figure 1 is well known and does not need to be illustrated and can be summarized shortly.
+
+Section 2.2: a correct statement about 'larger gratings (line 7) but this is not the topic of this paper)
+
+Section 3 Figure 3: in figure 2 the suggestion is given that the mirror covers a circular sub-aperture of the full mirror plane while in the ARCUS paper this is much clearer described (two 'rectangular' subsections. This would also make figure 4 more understandable.
+
+Section 3.2 Figure 4: what is the added value compared to fig 2
+
+Section 3.2 just below figure 4: The use of tilted Rowland circles is used already for a long time in space missions (see RGS on XMM-Newton). The new step introduced by Heilman is that this can also be achieved by Critical Angle Transmission gratings. In this sense using tilted Rowland cicles is a well known concept.
+
+
+Frig 5: blue and black colors are not easy to distinguish. Also the figure becomes more clear if at the rich side a panel is shown with the mirror aperture used for each of the sub-panels.
+
+
+In the same paragraph (5 lines lower) high diffraction efficiencies are mentioned. Omn the various simulatiopns/descriptions this is further neglected. It wopuld be good to quantify this.
+
+Equation 3: I do not believe anywhere the y component is used (but probably it is included as it is part of the software tools (but then y not equals zero).
+
+Section 3.3: Figure 6 and 7 are another set of similar figures, reducing it to fig 7 should be considered as in fig 2 you describe the basic principle and in fig 7 you give the final concept.
+
+
+Section 3.4.1 is probably the most relevant extension of earlier papers although I did not check if this is not already in the published ARCUS proposal
+
+Section 4.1.1: The advantage of subaperturing is presented at the cost of the technical compelkxity achieving a better PSF. As such it is true but one limits the usable open area provided by a satellite (with a circular shaoe). Alternatively one populate the unsused open area at the cost of an ectra detector to collect the dispersed X-rays in a 90 degree rotated system
+
+
+Figure 9: it could be good to identify which parts of the recorded data is to to the dispersion of the photons perpendicular to the main dispersion direction. How does this affect the dispersed spectram?
+
+Fig 10: contains essentially the same as figure 9, I would reduce this to a single figure
+
+
+
+
